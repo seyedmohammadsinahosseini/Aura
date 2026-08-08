@@ -1,0 +1,1 @@
+build_example: false # true for building example - false for creating conan package

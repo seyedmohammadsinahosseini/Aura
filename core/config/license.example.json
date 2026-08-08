@@ -1,0 +1,11 @@
+{
+  "modules": [
+    "detection",
+    "tracking",
+    "recognition",
+    "attendance"
+  ],
+  "max_cameras": 4,
+  "expires": "2030-01-01",
+  "signature": "replace-with-your-issued-license-signature"
+}
