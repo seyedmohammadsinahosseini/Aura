@@ -1,7 +1,10 @@
-# ===== Build artifacts =====
+# ---------------------------------------------------------------------------
+# Build artifacts
+# ---------------------------------------------------------------------------
 build/
 out/
 cmake-build-*/
+install/
 *.o
 *.obj
 *.a
@@ -11,8 +14,15 @@ cmake-build-*/
 *.dll
 *.lib
 *.exe
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+Testing/
 
-# ===== IDEs & editors =====
+# ---------------------------------------------------------------------------
+# IDEs and editors
+# ---------------------------------------------------------------------------
 .idea/
 .vscode/
 *.user
@@ -22,7 +32,9 @@ cmake-build-*/
 *.vcxproj
 *.vcxproj.filters
 
-# ===== OS metadata =====
+# ---------------------------------------------------------------------------
+# OS metadata
+# ---------------------------------------------------------------------------
 desktop.ini
 Thumbs.db
 .DS_Store
@@ -30,29 +42,42 @@ Thumbs.db
 *.swo
 *~
 
-# ===== Caches & tooling =====
+# ---------------------------------------------------------------------------
+# Caches and tooling
+# ---------------------------------------------------------------------------
 .cache/
 .ccls-cache/
 compile_commands.json
+*.gcda
+*.gcno
+*.gcov
 
-# ===== Databases =====
+# ---------------------------------------------------------------------------
+# Runtime state: databases, generated files and private configuration.
+# Only the `*.example.json` templates are tracked; the real files hold
+# deployment-specific values (and on some installs, camera credentials).
+# ---------------------------------------------------------------------------
 *.db
+*.db-journal
 *.sqlite
 *.sqlite3
-*.db-journal
 *.sqlite3-journal
 *.bak
+core/config/config.json
+core/config/license.json
 
-# ===== Face images (privacy) =====
-crops/*.jpg
-crops/*.jpeg
-data/crops/*.jpg
-data/crops/*.jpeg
+# Never commit biometric data or captures.
+crops/*
+!crops/.gitkeep
 *.jpg
 *.jpeg
 *.png
+!docs/images/*.png
+!docs/images/*.jpg
 
-# ===== Model weights (obtained separately, see core/models/README.md) =====
+# ---------------------------------------------------------------------------
+# Model weights — obtained and converted separately, see docs/MODELS.md
+# ---------------------------------------------------------------------------
 *.engine
 *.onnx
 *.etlt
@@ -62,7 +87,9 @@ data/crops/*.jpeg
 core/models/openvino/*.xml.hash
 core/models/facedetect/tao-converter
 
-# ===== Media files =====
+# ---------------------------------------------------------------------------
+# Media (test clips must not end up in git history)
+# ---------------------------------------------------------------------------
 *.avi
 *.mp4
 *.mpeg
@@ -70,7 +97,9 @@ core/models/facedetect/tao-converter
 *.mov
 *.ts
 
-# ===== Conan generated files =====
+# ---------------------------------------------------------------------------
+# Conan generated files
+# ---------------------------------------------------------------------------
 conan_toolchain.cmake
 conanbuild.*
 conanrun.*
@@ -86,16 +115,12 @@ CMakeUserPresets.json
 *-config.cmake
 *Targets.cmake
 
-# ===== License / private configuration =====
-core/config/license.json
+# ---------------------------------------------------------------------------
+# Non-redistributable internal packages (see conan/README.md)
+# ---------------------------------------------------------------------------
+conan/recipes/log-entry/
+conan.tar.xz
 
-# ===== Third-party proprietary packages (not redistributable) =====
-conan-custom/log-entry/
-
-# ===== Redundant archives =====
-conan-custom.tar.xz
-
-# ===== Keep empty runtime directories =====
-!crops/.gitkeep
-!data/.gitkeep
-!data/crops/.gitkeep
+# Python
+__pycache__/
+*.pyc

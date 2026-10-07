@@ -4,17 +4,15 @@
 #include <opencv2/opencv.hpp>
 
 namespace face {
-    class CFar {
+class CFar {
+public:
+    explicit CFar();
+    float mFarHeight;
+    float mFarWidth;
+    bool CheckSize(const std::pair<int, int>& frameInfo, const cv::Rect& bbox) const;
 
-
-    public:
-        explicit CFar();
-        float mFarHeight;
-        float mFarWidth;
-        bool CheckSize(const std::pair<int, int> &frameInfo, const cv::Rect &bbox) const;
-
-        ~CFar();
-    };
-}
+    ~CFar();
+};
+} // namespace face
 
 #endif //FACE_CPP_CFAR_H

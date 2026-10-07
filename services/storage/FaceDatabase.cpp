@@ -90,7 +90,7 @@ face::BreakRecord readBreakRecord(sqlite3_stmt* stmt) {
     return record;
 }
 
-}  // namespace
+} // namespace
 
 namespace face {
 
@@ -107,7 +107,8 @@ FaceDatabase::~FaceDatabase() {
 
 void FaceDatabase::open(const std::string& dbPath) {
     if (sqlite3_open(dbPath.c_str(), &db_) != SQLITE_OK) {
-        const std::string message = db_ != nullptr ? sqlite3_errmsg(db_) : "failed to open sqlite database";
+        const std::string message =
+            db_ != nullptr ? sqlite3_errmsg(db_) : "failed to open sqlite database";
         if (db_ != nullptr) {
             sqlite3_close(db_);
             db_ = nullptr;
@@ -117,112 +118,104 @@ void FaceDatabase::open(const std::string& dbPath) {
 }
 
 void FaceDatabase::createTables() {
-    execute(
-        "CREATE TABLE IF NOT EXISTS persons ("
-        "id INTEGER PRIMARY KEY,"
-        "name TEXT NOT NULL,"
-        "code TEXT UNIQUE,"
-        "created_at INTEGER,"
-        "is_known INTEGER DEFAULT 1,"
-        "picture_path TEXT,"
-        "access_level INTEGER NOT NULL DEFAULT 2"
-        ");");
+    execute("CREATE TABLE IF NOT EXISTS persons ("
+            "id INTEGER PRIMARY KEY,"
+            "name TEXT NOT NULL,"
+            "code TEXT UNIQUE,"
+            "created_at INTEGER,"
+            "is_known INTEGER DEFAULT 1,"
+            "picture_path TEXT,"
+            "access_level INTEGER NOT NULL DEFAULT 2"
+            ");");
 
-    execute(
-        "CREATE TABLE IF NOT EXISTS reference_faces ("
-        "id INTEGER PRIMARY KEY,"
-        "person_id INTEGER,"
-        "embedding BLOB,"
-        "created_at INTEGER,"
-        "FOREIGN KEY(person_id) REFERENCES persons(id)"
-        ");");
+    execute("CREATE TABLE IF NOT EXISTS reference_faces ("
+            "id INTEGER PRIMARY KEY,"
+            "person_id INTEGER,"
+            "embedding BLOB,"
+            "created_at INTEGER,"
+            "FOREIGN KEY(person_id) REFERENCES persons(id)"
+            ");");
 
-    execute(
-        "CREATE TABLE IF NOT EXISTS unknown_faces ("
-        "id INTEGER PRIMARY KEY,"
-        "embedding BLOB NOT NULL,"
-        "track_id TEXT NOT NULL,"
-        "camera_uid TEXT NOT NULL,"
-        "timestamp INTEGER,"
-        "image_path TEXT"
-        ");");
+    execute("CREATE TABLE IF NOT EXISTS unknown_faces ("
+            "id INTEGER PRIMARY KEY,"
+            "embedding BLOB NOT NULL,"
+            "track_id TEXT NOT NULL,"
+            "camera_uid TEXT NOT NULL,"
+            "timestamp INTEGER,"
+            "image_path TEXT"
+            ");");
 
-    execute(
-        "CREATE TABLE IF NOT EXISTS attendance_logs ("
-        "id INTEGER PRIMARY KEY,"
-        "person_id INTEGER,"
-        "track_id TEXT,"
-        "event_type TEXT,"
-        "timestamp INTEGER,"
-        "FOREIGN KEY(person_id) REFERENCES persons(id)"
-        ");");
+    execute("CREATE TABLE IF NOT EXISTS attendance_logs ("
+            "id INTEGER PRIMARY KEY,"
+            "person_id INTEGER,"
+            "track_id TEXT,"
+            "event_type TEXT,"
+            "timestamp INTEGER,"
+            "FOREIGN KEY(person_id) REFERENCES persons(id)"
+            ");");
 
-    execute(
-        "CREATE TABLE IF NOT EXISTS raw_detections ("
-        "id INTEGER PRIMARY KEY,"
-        "person_id INTEGER,"
-        "track_id TEXT NOT NULL,"
-        "embedding BLOB NOT NULL,"
-        "image_path TEXT,"
-        "timestamp INTEGER,"
-        "status TEXT,"
-        "confidence REAL NOT NULL DEFAULT 0.0,"
-        "FOREIGN KEY(person_id) REFERENCES persons(id)"
-        ");");
+    execute("CREATE TABLE IF NOT EXISTS raw_detections ("
+            "id INTEGER PRIMARY KEY,"
+            "person_id INTEGER,"
+            "track_id TEXT NOT NULL,"
+            "embedding BLOB NOT NULL,"
+            "image_path TEXT,"
+            "timestamp INTEGER,"
+            "status TEXT,"
+            "confidence REAL NOT NULL DEFAULT 0.0,"
+            "FOREIGN KEY(person_id) REFERENCES persons(id)"
+            ");");
 
     // Migration: add confidence column for existing databases
     try {
         execute("ALTER TABLE raw_detections ADD COLUMN confidence REAL NOT NULL DEFAULT 0.0;");
-    } catch (...) {}
+    } catch (...) {
+    }
 
-    execute(
-        "CREATE TABLE IF NOT EXISTS system_settings ("
-        "key TEXT PRIMARY KEY,"
-        "value TEXT,"
-        "description TEXT,"
-        "updated_at INTEGER"
-        ");");
+    execute("CREATE TABLE IF NOT EXISTS system_settings ("
+            "key TEXT PRIMARY KEY,"
+            "value TEXT,"
+            "description TEXT,"
+            "updated_at INTEGER"
+            ");");
 
-    execute(
-        "CREATE TABLE IF NOT EXISTS person_schedules ("
-        "id INTEGER PRIMARY KEY,"
-        "person_id INTEGER NOT NULL UNIQUE,"
-        "expected_arrival TEXT NOT NULL DEFAULT '08:00',"
-        "expected_departure TEXT NOT NULL DEFAULT '17:00',"
-        "grace_minutes INTEGER NOT NULL DEFAULT 15,"
-        "work_days TEXT NOT NULL DEFAULT '1,2,3,4,5',"
-        "updated_at INTEGER,"
-        "FOREIGN KEY(person_id) REFERENCES persons(id)"
-        ");");
+    execute("CREATE TABLE IF NOT EXISTS person_schedules ("
+            "id INTEGER PRIMARY KEY,"
+            "person_id INTEGER NOT NULL UNIQUE,"
+            "expected_arrival TEXT NOT NULL DEFAULT '08:00',"
+            "expected_departure TEXT NOT NULL DEFAULT '17:00',"
+            "grace_minutes INTEGER NOT NULL DEFAULT 15,"
+            "work_days TEXT NOT NULL DEFAULT '1,2,3,4,5',"
+            "updated_at INTEGER,"
+            "FOREIGN KEY(person_id) REFERENCES persons(id)"
+            ");");
 
-    execute(
-        "CREATE TABLE IF NOT EXISTS zones ("
-        "id INTEGER PRIMARY KEY,"
-        "name TEXT NOT NULL,"
-        "description TEXT,"
-        "created_at INTEGER,"
-        "required_access_level INTEGER DEFAULT 2"
-        ");");
+    execute("CREATE TABLE IF NOT EXISTS zones ("
+            "id INTEGER PRIMARY KEY,"
+            "name TEXT NOT NULL,"
+            "description TEXT,"
+            "created_at INTEGER,"
+            "required_access_level INTEGER DEFAULT 2"
+            ");");
 
-    execute(
-        "CREATE TABLE IF NOT EXISTS cameras ("
-        "id INTEGER PRIMARY KEY,"
-        "camera_uid TEXT UNIQUE NOT NULL,"
-        "name TEXT,"
-        "zone_id INTEGER,"
-        "type TEXT NOT NULL,"
-        "stream_enabled INTEGER NOT NULL DEFAULT 1,"
-        "ai_enabled INTEGER NOT NULL DEFAULT 1,"
-        "connection_type TEXT NOT NULL DEFAULT 'RTSP',"
-        "username TEXT DEFAULT '',"
-        "password TEXT DEFAULT '',"
-        "stream_uri TEXT DEFAULT '',"
-        "encoding TEXT DEFAULT '',"
-        "onvif_xaddrs TEXT DEFAULT '',"
-        "transport_protocol TEXT DEFAULT 'tcp',"
-        "created_at INTEGER,"
-        "FOREIGN KEY(zone_id) REFERENCES zones(id)"
-        ");");
+    execute("CREATE TABLE IF NOT EXISTS cameras ("
+            "id INTEGER PRIMARY KEY,"
+            "camera_uid TEXT UNIQUE NOT NULL,"
+            "name TEXT,"
+            "zone_id INTEGER,"
+            "type TEXT NOT NULL,"
+            "stream_enabled INTEGER NOT NULL DEFAULT 1,"
+            "ai_enabled INTEGER NOT NULL DEFAULT 1,"
+            "connection_type TEXT NOT NULL DEFAULT 'RTSP',"
+            "username TEXT DEFAULT '',"
+            "password TEXT DEFAULT '',"
+            "stream_uri TEXT DEFAULT '',"
+            "encoding TEXT DEFAULT '',"
+            "onvif_xaddrs TEXT DEFAULT '',"
+            "transport_protocol TEXT DEFAULT 'tcp',"
+            "created_at INTEGER,"
+            "FOREIGN KEY(zone_id) REFERENCES zones(id)"
+            ");");
 
     if (!hasColumn("cameras", "stream_enabled")) {
         execute("ALTER TABLE cameras ADD COLUMN stream_enabled INTEGER NOT NULL DEFAULT 1;");
@@ -249,73 +242,68 @@ void FaceDatabase::createTables() {
         execute("ALTER TABLE cameras ADD COLUMN transport_protocol TEXT DEFAULT 'tcp';");
     }
 
-    execute(
-        "CREATE TABLE IF NOT EXISTS camera_module_config ("
-        "camera_uid TEXT NOT NULL,"
-        "module_name TEXT NOT NULL,"
-        "enabled INTEGER NOT NULL DEFAULT 1,"
-        "config_json TEXT NOT NULL DEFAULT '{}',"
-        "PRIMARY KEY (camera_uid, module_name),"
-        "FOREIGN KEY(camera_uid) REFERENCES cameras(camera_uid)"
-        ");");
+    execute("CREATE TABLE IF NOT EXISTS camera_module_config ("
+            "camera_uid TEXT NOT NULL,"
+            "module_name TEXT NOT NULL,"
+            "enabled INTEGER NOT NULL DEFAULT 1,"
+            "config_json TEXT NOT NULL DEFAULT '{}',"
+            "PRIMARY KEY (camera_uid, module_name),"
+            "FOREIGN KEY(camera_uid) REFERENCES cameras(camera_uid)"
+            ");");
 
-    execute(
-        "CREATE TABLE IF NOT EXISTS work_sessions ("
-        "id INTEGER PRIMARY KEY,"
-        "person_id INTEGER NOT NULL,"
-        "date TEXT NOT NULL,"
-        "arrival_time INTEGER,"
-        "departure_time INTEGER,"
-        "total_work_seconds INTEGER DEFAULT 0,"
-        "total_break_seconds INTEGER DEFAULT 0,"
-        "is_complete INTEGER DEFAULT 0,"
-        "created_at INTEGER,"
-        "UNIQUE(person_id, date),"
-        "FOREIGN KEY(person_id) REFERENCES persons(id)"
-        ");");
+    execute("CREATE TABLE IF NOT EXISTS work_sessions ("
+            "id INTEGER PRIMARY KEY,"
+            "person_id INTEGER NOT NULL,"
+            "date TEXT NOT NULL,"
+            "arrival_time INTEGER,"
+            "departure_time INTEGER,"
+            "total_work_seconds INTEGER DEFAULT 0,"
+            "total_break_seconds INTEGER DEFAULT 0,"
+            "is_complete INTEGER DEFAULT 0,"
+            "created_at INTEGER,"
+            "UNIQUE(person_id, date),"
+            "FOREIGN KEY(person_id) REFERENCES persons(id)"
+            ");");
 
-    execute(
-        "CREATE TABLE IF NOT EXISTS breaks ("
-        "id INTEGER PRIMARY KEY,"
-        "session_id INTEGER NOT NULL,"
-        "person_id INTEGER NOT NULL,"
-        "break_start INTEGER,"
-        "break_end INTEGER,"
-        "break_seconds INTEGER DEFAULT 0,"
-        "FOREIGN KEY(session_id) REFERENCES work_sessions(id),"
-        "FOREIGN KEY(person_id) REFERENCES persons(id)"
-        ");");
+    execute("CREATE TABLE IF NOT EXISTS breaks ("
+            "id INTEGER PRIMARY KEY,"
+            "session_id INTEGER NOT NULL,"
+            "person_id INTEGER NOT NULL,"
+            "break_start INTEGER,"
+            "break_end INTEGER,"
+            "break_seconds INTEGER DEFAULT 0,"
+            "FOREIGN KEY(session_id) REFERENCES work_sessions(id),"
+            "FOREIGN KEY(person_id) REFERENCES persons(id)"
+            ");");
 
-    execute(
-        "CREATE TABLE IF NOT EXISTS location_log ("
-        "id INTEGER PRIMARY KEY,"
-        "person_id INTEGER NOT NULL,"
-        "zone_id INTEGER NOT NULL,"
-        "camera_id INTEGER NOT NULL,"
-        "timestamp INTEGER NOT NULL,"
-        "FOREIGN KEY(person_id) REFERENCES persons(id),"
-        "FOREIGN KEY(zone_id) REFERENCES zones(id),"
-        "FOREIGN KEY(camera_id) REFERENCES cameras(id)"
-        ");");
+    execute("CREATE TABLE IF NOT EXISTS location_log ("
+            "id INTEGER PRIMARY KEY,"
+            "person_id INTEGER NOT NULL,"
+            "zone_id INTEGER NOT NULL,"
+            "camera_id INTEGER NOT NULL,"
+            "timestamp INTEGER NOT NULL,"
+            "FOREIGN KEY(person_id) REFERENCES persons(id),"
+            "FOREIGN KEY(zone_id) REFERENCES zones(id),"
+            "FOREIGN KEY(camera_id) REFERENCES cameras(id)"
+            ");");
 
-    execute(
-        "CREATE TABLE IF NOT EXISTS tardiness_log ("
-        "id INTEGER PRIMARY KEY,"
-        "person_id INTEGER NOT NULL,"
-        "date TEXT NOT NULL,"
-        "expected_arrival INTEGER,"
-        "actual_arrival INTEGER,"
-        "tardiness_seconds INTEGER DEFAULT 0,"
-        "is_absent INTEGER DEFAULT 0,"
-        "FOREIGN KEY(person_id) REFERENCES persons(id)"
-        ");");
-
+    execute("CREATE TABLE IF NOT EXISTS tardiness_log ("
+            "id INTEGER PRIMARY KEY,"
+            "person_id INTEGER NOT NULL,"
+            "date TEXT NOT NULL,"
+            "expected_arrival INTEGER,"
+            "actual_arrival INTEGER,"
+            "tardiness_seconds INTEGER DEFAULT 0,"
+            "is_absent INTEGER DEFAULT 0,"
+            "FOREIGN KEY(person_id) REFERENCES persons(id)"
+            ");");
 }
 
 void FaceDatabase::execute(const std::string& sql) {
     char* errorMessage = nullptr;
     if (sqlite3_exec(db_, sql.c_str(), nullptr, nullptr, &errorMessage) != SQLITE_OK) {
-        const std::string message = errorMessage != nullptr ? errorMessage : "sqlite execution failed";
+        const std::string message =
+            errorMessage != nullptr ? errorMessage : "sqlite execution failed";
         sqlite3_free(errorMessage);
         throw std::runtime_error(message);
     }
@@ -337,8 +325,11 @@ void FaceDatabase::validateEmbeddingSize(const std::vector<float>& emb) {
     }
 }
 
-int64_t FaceDatabase::addPerson(const std::string& name, const std::string& code, const bool isKnown, const std::string& picturePath) {
-    Statement stmt(db_, "INSERT INTO persons(name, code, created_at, is_known, picture_path) VALUES(?, ?, ?, ?, ?);");
+int64_t FaceDatabase::addPerson(const std::string& name, const std::string& code,
+                                const bool isKnown, const std::string& picturePath) {
+    Statement stmt(
+        db_,
+        "INSERT INTO persons(name, code, created_at, is_known, picture_path) VALUES(?, ?, ?, ?, ?);");
     sqlite3_bind_text(stmt.get(), 1, name.c_str(), -1, SQLITE_TRANSIENT);
     if (code.empty()) {
         sqlite3_bind_null(stmt.get(), 2);
@@ -354,7 +345,8 @@ int64_t FaceDatabase::addPerson(const std::string& name, const std::string& code
     return sqlite3_last_insert_rowid(db_);
 }
 
-int64_t FaceDatabase::addPerson(const std::string& name, const std::string& code, bool isKnown, const cv::Mat& image, const std::string& cropsDir) {
+int64_t FaceDatabase::addPerson(const std::string& name, const std::string& code, bool isKnown,
+                                const cv::Mat& image, const std::string& cropsDir) {
     const std::string picturePath = buildCropPath(cropsDir, currentUnixTimestamp(), -1, "manual");
     ensureDirectoryExists(cropsDir);
     cv::imwrite(picturePath, image);
@@ -362,7 +354,9 @@ int64_t FaceDatabase::addPerson(const std::string& name, const std::string& code
 }
 
 bool FaceDatabase::getPerson(int64_t id, Person& out) {
-    Statement stmt(db_, "SELECT id, name, code, created_at, picture_path, access_level FROM persons WHERE id = ?;");
+    Statement stmt(
+        db_,
+        "SELECT id, name, code, created_at, picture_path, access_level FROM persons WHERE id = ?;");
     sqlite3_bind_int64(stmt.get(), 1, id);
     if (sqlite3_step(stmt.get()) != SQLITE_ROW) {
         return false;
@@ -380,9 +374,11 @@ bool FaceDatabase::getPerson(int64_t id, Person& out) {
 void FaceDatabase::addReferenceEmbedding(int64_t personId, const std::vector<float>& emb) {
     validateEmbeddingSize(emb);
 
-    Statement stmt(db_, "INSERT INTO reference_faces(person_id, embedding, created_at) VALUES(?, ?, ?);");
+    Statement stmt(
+        db_, "INSERT INTO reference_faces(person_id, embedding, created_at) VALUES(?, ?, ?);");
     sqlite3_bind_int64(stmt.get(), 1, personId);
-    sqlite3_bind_blob(stmt.get(), 2, emb.data(), static_cast<int>(emb.size() * sizeof(float)), SQLITE_TRANSIENT);
+    sqlite3_bind_blob(stmt.get(), 2, emb.data(), static_cast<int>(emb.size() * sizeof(float)),
+                      SQLITE_TRANSIENT);
     sqlite3_bind_int64(stmt.get(), 3, currentUnixTimestamp());
 
     if (sqlite3_step(stmt.get()) != SQLITE_DONE) {
@@ -390,10 +386,15 @@ void FaceDatabase::addReferenceEmbedding(int64_t personId, const std::vector<flo
     }
 }
 
-void FaceDatabase::addUnknownFace(const std::vector<float>& embedding, const std::string& trackId, const std::string& cameraUid, int64_t timestamp, const std::string& imagePath) {
+void FaceDatabase::addUnknownFace(const std::vector<float>& embedding, const std::string& trackId,
+                                  const std::string& cameraUid, int64_t timestamp,
+                                  const std::string& imagePath) {
     validateEmbeddingSize(embedding);
-    Statement stmt(db_, "INSERT INTO unknown_faces(embedding, track_id, camera_uid, timestamp, image_path) VALUES(?, ?, ?, ?, ?);");
-    sqlite3_bind_blob(stmt.get(), 1, embedding.data(), static_cast<int>(embedding.size() * sizeof(float)), SQLITE_TRANSIENT);
+    Statement stmt(
+        db_,
+        "INSERT INTO unknown_faces(embedding, track_id, camera_uid, timestamp, image_path) VALUES(?, ?, ?, ?, ?);");
+    sqlite3_bind_blob(stmt.get(), 1, embedding.data(),
+                      static_cast<int>(embedding.size() * sizeof(float)), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt.get(), 2, trackId.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt.get(), 3, cameraUid.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_int64(stmt.get(), 4, timestamp);
@@ -404,7 +405,8 @@ void FaceDatabase::addUnknownFace(const std::vector<float>& embedding, const std
 }
 
 bool FaceDatabase::unknownFaceExists(const std::string& trackId, const std::string& cameraUid) {
-    Statement stmt(db_, "SELECT COUNT(*) FROM unknown_faces WHERE track_id = ? AND camera_uid = ?;");
+    Statement stmt(db_,
+                   "SELECT COUNT(*) FROM unknown_faces WHERE track_id = ? AND camera_uid = ?;");
     sqlite3_bind_text(stmt.get(), 1, trackId.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt.get(), 2, cameraUid.c_str(), -1, SQLITE_TRANSIENT);
     if (sqlite3_step(stmt.get()) == SQLITE_ROW) {
@@ -414,7 +416,9 @@ bool FaceDatabase::unknownFaceExists(const std::string& trackId, const std::stri
 }
 
 std::vector<std::pair<int64_t, std::vector<float>>> FaceDatabase::getAllReferenceEmbeddings() {
-    Statement stmt(db_, "SELECT rf.person_id, rf.embedding FROM reference_faces rf JOIN persons p ON rf.person_id = p.id WHERE p.is_known = 1;");
+    Statement stmt(
+        db_,
+        "SELECT rf.person_id, rf.embedding FROM reference_faces rf JOIN persons p ON rf.person_id = p.id WHERE p.is_known = 1;");
     std::vector<std::pair<int64_t, std::vector<float>>> all;
 
     while (sqlite3_step(stmt.get()) == SQLITE_ROW) {
@@ -444,12 +448,9 @@ int64_t FaceDatabase::addRawDetection(const RawDetection& detection) {
         sqlite3_bind_int64(stmt.get(), 1, detection.personId);
     }
     sqlite3_bind_text(stmt.get(), 2, detection.trackId.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_blob(
-        stmt.get(),
-        3,
-        detection.embedding.data(),
-        static_cast<int>(detection.embedding.size() * sizeof(float)),
-        SQLITE_TRANSIENT);
+    sqlite3_bind_blob(stmt.get(), 3, detection.embedding.data(),
+                      static_cast<int>(detection.embedding.size() * sizeof(float)),
+                      SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt.get(), 4, detection.imagePath.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_int64(stmt.get(), 5, detection.timestamp);
     sqlite3_bind_text(stmt.get(), 6, detection.status.c_str(), -1, SQLITE_TRANSIENT);
@@ -462,10 +463,8 @@ int64_t FaceDatabase::addRawDetection(const RawDetection& detection) {
     return sqlite3_last_insert_rowid(db_);
 }
 
-void FaceDatabase::addAttendanceLog(int64_t personId,
-                                    const std::string& trackId,
-                                    const std::string& eventType,
-                                    int64_t timestamp) {
+void FaceDatabase::addAttendanceLog(int64_t personId, const std::string& trackId,
+                                    const std::string& eventType, int64_t timestamp) {
     Statement stmt(
         db_,
         "INSERT INTO attendance_logs(person_id, track_id, event_type, timestamp) VALUES(?, ?, ?, ?);");
@@ -480,7 +479,9 @@ void FaceDatabase::addAttendanceLog(int64_t personId,
 }
 
 std::vector<RawDetection> FaceDatabase::getAllDetections() {
-    Statement stmt(db_, "SELECT id, person_id, track_id, image_path, timestamp, status, confidence FROM raw_detections ORDER BY timestamp DESC;");
+    Statement stmt(
+        db_,
+        "SELECT id, person_id, track_id, image_path, timestamp, status, confidence FROM raw_detections ORDER BY timestamp DESC;");
     std::vector<RawDetection> dets;
     while (sqlite3_step(stmt.get()) == SQLITE_ROW) {
         RawDetection det;
@@ -514,7 +515,9 @@ void FaceDatabase::updateRawDetectionPersonId(int64_t detectionId, int64_t perso
 }
 
 std::vector<UnknownFace> FaceDatabase::getUnknownFaces() const {
-    Statement stmt(db_, "SELECT id, embedding, track_id, camera_uid, timestamp, image_path FROM unknown_faces ORDER BY timestamp DESC;");
+    Statement stmt(
+        db_,
+        "SELECT id, embedding, track_id, camera_uid, timestamp, image_path FROM unknown_faces ORDER BY timestamp DESC;");
     std::vector<UnknownFace> faces;
     while (sqlite3_step(stmt.get()) == SQLITE_ROW) {
         UnknownFace face;
@@ -543,7 +546,8 @@ bool FaceDatabase::deleteUnknownFace(int64_t id) {
     return sqlite3_changes(db_) > 0;
 }
 
-bool FaceDatabase::deleteUnknownFaceByTrackId(const std::string& trackId, const std::string& cameraUid) {
+bool FaceDatabase::deleteUnknownFaceByTrackId(const std::string& trackId,
+                                              const std::string& cameraUid) {
     Statement stmt(db_, "DELETE FROM unknown_faces WHERE track_id = ? AND camera_uid = ?;");
     sqlite3_bind_text(stmt.get(), 1, trackId.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt.get(), 2, cameraUid.c_str(), -1, SQLITE_TRANSIENT);
@@ -554,12 +558,12 @@ bool FaceDatabase::deleteUnknownFaceByTrackId(const std::string& trackId, const 
 }
 
 bool FaceDatabase::updateUnknownFaceEmbedding(const std::string& trackId,
-                                               const std::string& cameraUid,
-                                               const std::vector<float>& newEmbedding) {
+                                              const std::string& cameraUid,
+                                              const std::vector<float>& newEmbedding) {
     validateEmbeddingSize(newEmbedding);
     Statement stmt(db_,
-        "UPDATE unknown_faces SET embedding = ?, timestamp = ? "
-        "WHERE track_id = ? AND camera_uid = ?;");
+                   "UPDATE unknown_faces SET embedding = ?, timestamp = ? "
+                   "WHERE track_id = ? AND camera_uid = ?;");
     sqlite3_bind_blob(stmt.get(), 1, newEmbedding.data(),
                       static_cast<int>(newEmbedding.size() * sizeof(float)), SQLITE_TRANSIENT);
     sqlite3_bind_int64(stmt.get(), 2, static_cast<int64_t>(std::time(nullptr)));
@@ -571,7 +575,8 @@ bool FaceDatabase::updateUnknownFaceEmbedding(const std::string& trackId,
     return sqlite3_changes(db_) > 0;
 }
 
-int64_t FaceDatabase::enrollUnknownAsNewPerson(int64_t unknownFaceId, const std::string& name, const std::string& code, int accessLevel) {
+int64_t FaceDatabase::enrollUnknownAsNewPerson(int64_t unknownFaceId, const std::string& name,
+                                               const std::string& code, int accessLevel) {
     // Read the unknown face record
     Statement readStmt(db_, "SELECT embedding, image_path FROM unknown_faces WHERE id = ?;");
     sqlite3_bind_int64(readStmt.get(), 1, unknownFaceId);
@@ -736,10 +741,9 @@ bool FaceDatabase::deleteCamera(const std::string& cameraUid) {
         }
 
         {
-            Statement stmt(
-                db_,
-                "DELETE FROM location_log "
-                "WHERE camera_id IN (SELECT id FROM cameras WHERE camera_uid = ?);");
+            Statement stmt(db_,
+                           "DELETE FROM location_log "
+                           "WHERE camera_id IN (SELECT id FROM cameras WHERE camera_uid = ?);");
             sqlite3_bind_text(stmt.get(), 1, cameraUid.c_str(), -1, SQLITE_TRANSIENT);
             if (sqlite3_step(stmt.get()) != SQLITE_DONE) {
                 execute("ROLLBACK;");
@@ -761,7 +765,8 @@ bool FaceDatabase::deleteCamera(const std::string& cameraUid) {
     } catch (...) {
         try {
             execute("ROLLBACK;");
-        } catch (...) {}
+        } catch (...) {
+        }
         return false;
     }
 }
@@ -786,18 +791,25 @@ bool FaceDatabase::updateCameraAiEnabled(const std::string& cameraUid, bool enab
     return sqlite3_changes(db_) > 0;
 }
 
-std::optional<std::pair<bool, std::string>> FaceDatabase::getCameraModuleConfig(const std::string& cameraUid, const std::string& moduleName) {
-    Statement stmt(db_, "SELECT enabled, config_json FROM camera_module_config WHERE camera_uid = ? AND module_name = ?;");
+std::optional<std::pair<bool, std::string>>
+FaceDatabase::getCameraModuleConfig(const std::string& cameraUid, const std::string& moduleName) {
+    Statement stmt(
+        db_,
+        "SELECT enabled, config_json FROM camera_module_config WHERE camera_uid = ? AND module_name = ?;");
     sqlite3_bind_text(stmt.get(), 1, cameraUid.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt.get(), 2, moduleName.c_str(), -1, SQLITE_TRANSIENT);
-    if (sqlite3_step(stmt.get()) != SQLITE_ROW) return std::nullopt;
+    if (sqlite3_step(stmt.get()) != SQLITE_ROW)
+        return std::nullopt;
     bool enabled = columnBool(stmt.get(), 0);
     std::string cfg = columnText(stmt.get(), 1);
     return std::make_pair(enabled, cfg);
 }
 
-void FaceDatabase::setCameraModuleConfig(const std::string& cameraUid, const std::string& moduleName, bool enabled, const std::string& configJson) {
-    Statement stmt(db_,
+void FaceDatabase::setCameraModuleConfig(const std::string& cameraUid,
+                                         const std::string& moduleName, bool enabled,
+                                         const std::string& configJson) {
+    Statement stmt(
+        db_,
         "INSERT INTO camera_module_config(camera_uid, module_name, enabled, config_json) VALUES(?, ?, ?, ?) "
         "ON CONFLICT(camera_uid, module_name) DO UPDATE SET enabled = excluded.enabled, config_json = excluded.config_json;");
     sqlite3_bind_text(stmt.get(), 1, cameraUid.c_str(), -1, SQLITE_TRANSIENT);
@@ -821,7 +833,9 @@ int64_t FaceDatabase::addZone(const ZoneInfo& zone) {
 }
 
 std::optional<ZoneInfo> FaceDatabase::getZone(int64_t zoneId) {
-    Statement stmt(db_, "SELECT id, name, description, created_at, required_access_level FROM zones WHERE id = ?;");
+    Statement stmt(
+        db_,
+        "SELECT id, name, description, created_at, required_access_level FROM zones WHERE id = ?;");
     sqlite3_bind_int64(stmt.get(), 1, zoneId);
     if (sqlite3_step(stmt.get()) != SQLITE_ROW) {
         return std::nullopt;
@@ -837,7 +851,9 @@ std::optional<ZoneInfo> FaceDatabase::getZone(int64_t zoneId) {
 }
 
 std::vector<ZoneInfo> FaceDatabase::getAllZones() {
-    Statement stmt(db_, "SELECT id, name, description, created_at, required_access_level FROM zones ORDER BY id;");
+    Statement stmt(
+        db_,
+        "SELECT id, name, description, created_at, required_access_level FROM zones ORDER BY id;");
     std::vector<ZoneInfo> zones;
     while (sqlite3_step(stmt.get()) == SQLITE_ROW) {
         ZoneInfo zone;
@@ -851,7 +867,8 @@ std::vector<ZoneInfo> FaceDatabase::getAllZones() {
     return zones;
 }
 
-int64_t FaceDatabase::openWorkSession(int64_t personId, const std::string& date, int64_t timestamp) {
+int64_t FaceDatabase::openWorkSession(int64_t personId, const std::string& date,
+                                      int64_t timestamp) {
     Statement stmt(
         db_,
         "INSERT INTO work_sessions(person_id, date, arrival_time, created_at, is_complete) VALUES(?, ?, ?, ?, 0) "
@@ -868,7 +885,8 @@ int64_t FaceDatabase::openWorkSession(int64_t personId, const std::string& date,
     return session.has_value() ? session->id : 0;
 }
 
-void FaceDatabase::closeWorkSession(int64_t sessionId, int64_t timestamp, int64_t workSeconds, int64_t breakSeconds) {
+void FaceDatabase::closeWorkSession(int64_t sessionId, int64_t timestamp, int64_t workSeconds,
+                                    int64_t breakSeconds) {
     Statement stmt(
         db_,
         "UPDATE work_sessions SET departure_time = ?, total_work_seconds = ?, total_break_seconds = ?, is_complete = 1 "
@@ -929,7 +947,8 @@ std::optional<BreakRecord> FaceDatabase::getOpenBreak(int64_t sessionId) {
 }
 
 std::vector<BreakRecord> FaceDatabase::getTimeline(int64_t personId, const std::string& date) {
-    Statement sessionStmt(db_, "SELECT id FROM work_sessions WHERE person_id = ? AND date = ? LIMIT 1;");
+    Statement sessionStmt(db_,
+                          "SELECT id FROM work_sessions WHERE person_id = ? AND date = ? LIMIT 1;");
     sqlite3_bind_int64(sessionStmt.get(), 1, personId);
     sqlite3_bind_text(sessionStmt.get(), 2, date.c_str(), -1, SQLITE_TRANSIENT);
     if (sqlite3_step(sessionStmt.get()) != SQLITE_ROW) {
@@ -949,8 +968,11 @@ std::vector<BreakRecord> FaceDatabase::getTimeline(int64_t personId, const std::
     return timeline;
 }
 
-void FaceDatabase::logLocation(int64_t personId, int64_t zoneId, int64_t cameraId, int64_t timestamp) {
-    Statement stmt(db_, "INSERT INTO location_log(person_id, zone_id, camera_id, timestamp) VALUES(?, ?, ?, ?);");
+void FaceDatabase::logLocation(int64_t personId, int64_t zoneId, int64_t cameraId,
+                               int64_t timestamp) {
+    Statement stmt(
+        db_,
+        "INSERT INTO location_log(person_id, zone_id, camera_id, timestamp) VALUES(?, ?, ?, ?);");
     sqlite3_bind_int64(stmt.get(), 1, personId);
     sqlite3_bind_int64(stmt.get(), 2, zoneId);
     sqlite3_bind_int64(stmt.get(), 3, cameraId);
@@ -961,11 +983,10 @@ void FaceDatabase::logLocation(int64_t personId, int64_t zoneId, int64_t cameraI
 }
 
 std::optional<LocationRecord> FaceDatabase::getPersonCurrentLocation(int64_t personId) {
-    Statement stmt(
-        db_,
-        "SELECT l.person_id, l.zone_id, l.camera_id, l.timestamp, COALESCE(z.name, '') "
-        "FROM location_log l LEFT JOIN zones z ON z.id = l.zone_id "
-        "WHERE l.person_id = ? ORDER BY l.timestamp DESC LIMIT 1;");
+    Statement stmt(db_,
+                   "SELECT l.person_id, l.zone_id, l.camera_id, l.timestamp, COALESCE(z.name, '') "
+                   "FROM location_log l LEFT JOIN zones z ON z.id = l.zone_id "
+                   "WHERE l.person_id = ? ORDER BY l.timestamp DESC LIMIT 1;");
     sqlite3_bind_int64(stmt.get(), 1, personId);
     if (sqlite3_step(stmt.get()) != SQLITE_ROW) {
         return std::nullopt;
@@ -1094,7 +1115,8 @@ std::optional<PersonSchedule> FaceDatabase::getPersonSchedule(int64_t personId) 
     return schedule;
 }
 
-void FaceDatabase::setSetting(const std::string& key, const std::string& value, const std::string& description) {
+void FaceDatabase::setSetting(const std::string& key, const std::string& value,
+                              const std::string& description) {
     Statement stmt(
         db_,
         "INSERT INTO system_settings(key, value, description, updated_at) VALUES(?, ?, ?, ?) "
@@ -1118,7 +1140,9 @@ std::optional<std::string> FaceDatabase::getSetting(const std::string& key) {
 }
 
 std::vector<Person> FaceDatabase::getAllPersons() const {
-    Statement stmt(db_, "SELECT id, name, code, created_at, picture_path, access_level FROM persons ORDER BY id;");
+    Statement stmt(
+        db_,
+        "SELECT id, name, code, created_at, picture_path, access_level FROM persons ORDER BY id;");
     std::vector<Person> persons;
     while (sqlite3_step(stmt.get()) == SQLITE_ROW) {
         Person p;
@@ -1133,7 +1157,8 @@ std::vector<Person> FaceDatabase::getAllPersons() const {
     return persons;
 }
 
-bool FaceDatabase::updatePerson(int64_t personId, const std::string& name, const std::string& code) {
+bool FaceDatabase::updatePerson(int64_t personId, const std::string& name,
+                                const std::string& code) {
     Statement stmt(db_, "UPDATE persons SET name = ?, code = ? WHERE id = ?;");
     sqlite3_bind_text(stmt.get(), 1, name.c_str(), -1, SQLITE_TRANSIENT);
     if (code.empty()) {
@@ -1153,19 +1178,19 @@ bool FaceDatabase::deletePerson(int64_t personId) {
     Statement delRefs(db_, "DELETE FROM reference_faces WHERE person_id = ?;");
     sqlite3_bind_int64(delRefs.get(), 1, personId);
     sqlite3_step(delRefs.get());
-    
+
     Statement delRaw(db_, "DELETE FROM raw_detections WHERE person_id = ?;");
     sqlite3_bind_int64(delRaw.get(), 1, personId);
     sqlite3_step(delRaw.get());
-    
+
     Statement delAttendance(db_, "DELETE FROM attendance_logs WHERE person_id = ?;");
     sqlite3_bind_int64(delAttendance.get(), 1, personId);
     sqlite3_step(delAttendance.get());
-    
+
     Statement delSchedule(db_, "DELETE FROM person_schedules WHERE person_id = ?;");
     sqlite3_bind_int64(delSchedule.get(), 1, personId);
     sqlite3_step(delSchedule.get());
-    
+
     Statement delPerson(db_, "DELETE FROM persons WHERE id = ?;");
     sqlite3_bind_int64(delPerson.get(), 1, personId);
     if (sqlite3_step(delPerson.get()) != SQLITE_DONE) {
@@ -1178,7 +1203,8 @@ bool FaceDatabase::updatePersonAccessLevel(int64_t personId, int accessLevel) {
     Statement stmt(db_, "UPDATE persons SET access_level = ? WHERE id = ?;");
     sqlite3_bind_int(stmt.get(), 1, accessLevel);
     sqlite3_bind_int64(stmt.get(), 2, personId);
-    if (sqlite3_step(stmt.get()) != SQLITE_DONE) return false;
+    if (sqlite3_step(stmt.get()) != SQLITE_DONE)
+        return false;
     return sqlite3_changes(db_) > 0;
 }
 
@@ -1186,24 +1212,28 @@ bool FaceDatabase::updateZoneRequiredAccessLevel(int64_t zoneId, int requiredAcc
     Statement stmt(db_, "UPDATE zones SET required_access_level = ? WHERE id = ?;");
     sqlite3_bind_int(stmt.get(), 1, requiredAccessLevel);
     sqlite3_bind_int64(stmt.get(), 2, zoneId);
-    if (sqlite3_step(stmt.get()) != SQLITE_DONE) return false;
+    if (sqlite3_step(stmt.get()) != SQLITE_DONE)
+        return false;
     return sqlite3_changes(db_) > 0;
 }
 
-bool FaceDatabase::updateZone(int64_t zoneId, const std::string& name, const std::string& description) {
+bool FaceDatabase::updateZone(int64_t zoneId, const std::string& name,
+                              const std::string& description) {
     Statement stmt(db_, "UPDATE zones SET name = ?, description = ? WHERE id = ?;");
     sqlite3_bind_text(stmt.get(), 1, name.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt.get(), 2, description.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_int64(stmt.get(), 3, zoneId);
-    if (sqlite3_step(stmt.get()) != SQLITE_DONE) return false;
+    if (sqlite3_step(stmt.get()) != SQLITE_DONE)
+        return false;
     return sqlite3_changes(db_) > 0;
 }
 
 bool FaceDatabase::deleteZone(int64_t zoneId) {
     Statement stmt(db_, "DELETE FROM zones WHERE id = ?;");
     sqlite3_bind_int64(stmt.get(), 1, zoneId);
-    if (sqlite3_step(stmt.get()) != SQLITE_DONE) return false;
+    if (sqlite3_step(stmt.get()) != SQLITE_DONE)
+        return false;
     return sqlite3_changes(db_) > 0;
 }
 
-}  // namespace face
+} // namespace face

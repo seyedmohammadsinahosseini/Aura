@@ -6,6 +6,7 @@ import os
 
 class TensorRTRuntimeConan(ConanFile):
     name = "tensorrt-runtime"
+    version = "1.0.0"
     package_type = "library"
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False], "with_opencv": [True, False]}
@@ -63,7 +64,7 @@ class TensorRTRuntimeConan(ConanFile):
         self.options["opencv/4.12.0"].with_ffmpeg= False
 
     def requirements(self):
-        self.requires("log-factory/1.0.0-1-56934db0", transitive_headers=True, transitive_libs=True)
+        self.requires("log-factory/1.0.0", transitive_headers=True, transitive_libs=True)
         self.requires("nlohmann_json/3.11.3")
         if self.options.with_opencv:
             self.requires("opencv/4.12.0")

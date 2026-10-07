@@ -10,27 +10,27 @@
 #include <map>
 
 namespace camera {
-    class CameraManager {
-    public:
-        CameraManager() = default;
-        
-        // Discovers all types of cameras with error handling
-        std::vector<DeviceInfo> discoverAllCameras(const bool isDeepSearch);
-        
-        void printDevices(const std::vector<DeviceInfo>& devices) const;
+class CameraManager {
+public:
+    CameraManager() = default;
 
-        // Opens a camera and starts a dedicated background thread for it
-        std::shared_ptr<CameraStreamer> openCamera(const DeviceInfo& info);
+    // Discovers all types of cameras with error handling
+    std::vector<DeviceInfo> discoverAllCameras(const bool isDeepSearch);
 
-        // Closes a specific camera and removes it from the active registry
-        void closeCamera(const std::string& devicePath);
-        
-        void closeAll();
+    void printDevices(const std::vector<DeviceInfo>& devices) const;
 
-    private:
-        // Store streamers by their device path to manage them parallelly
-        std::map<std::string, std::shared_ptr<CameraStreamer>> m_activeStreams;
-    };
-}
+    // Opens a camera and starts a dedicated background thread for it
+    std::shared_ptr<CameraStreamer> openCamera(const DeviceInfo& info);
+
+    // Closes a specific camera and removes it from the active registry
+    void closeCamera(const std::string& devicePath);
+
+    void closeAll();
+
+private:
+    // Store streamers by their device path to manage them parallelly
+    std::map<std::string, std::shared_ptr<CameraStreamer>> m_activeStreams;
+};
+} // namespace camera
 
 #endif

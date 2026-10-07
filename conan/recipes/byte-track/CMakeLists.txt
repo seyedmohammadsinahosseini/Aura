@@ -25,7 +25,7 @@ if(WIN32)
     src/BYTETracker.cpp
     src/KalmanFilter.cpp
     src/lapjv.cpp
-    files/ByteTrack/Object.h
+    include/ByteTrack/Object.h
     src/Rect.cpp
     src/STrack.cpp
     windows_compat/uuid/uuid.h
@@ -38,14 +38,14 @@ else()
     src/BYTETracker.cpp
     src/KalmanFilter.cpp
     src/lapjv.cpp
-    files/ByteTrack/Object.h
+    include/ByteTrack/Object.h
     src/Rect.cpp
     src/STrack.cpp
   )
   target_link_libraries(${PROJECT_NAME} Eigen3::Eigen libuuid::libuuid)
 endif()
 
-install(DIRECTORY files/ByteTrack DESTINATION include)
+install(DIRECTORY include/ByteTrack DESTINATION include)
 
 install(TARGETS ${PROJECT_NAME}
         EXPORT bytetrackTargets

@@ -6,11 +6,12 @@ import os
 
 class ByteTrack(ConanFile):
     name = "byte-track"
+    version = "1.0.0"
     package_type = "library"
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False]}
     default_options = {"shared": False}
-    exports_sources = "CMakeLists.txt", "files/*", "src/*", "test/*", "windows_compat/*"
+    exports_sources = "CMakeLists.txt", "include/*", "src/*", "windows_compat/*"
 
     def layout(self):
         cmake_layout(self)
@@ -27,7 +28,7 @@ class ByteTrack(ConanFile):
         cmake.build()
 
     def package(self):
-        copy(self, "*.h", src=os.path.join(self.source_folder, "files/ByteTrack"), dst=os.path.join(self.package_folder, "include/ByteTrack"))
+        copy(self, "*.h", src=os.path.join(self.source_folder, "include/ByteTrack"), dst=os.path.join(self.package_folder, "include/ByteTrack"))
         copy(self, "*.a", src=self.build_folder, dst=os.path.join(self.package_folder, "lib"), keep_path=False)
 
     def package_info(self):

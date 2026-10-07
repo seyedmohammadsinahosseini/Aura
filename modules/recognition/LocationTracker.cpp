@@ -2,10 +2,10 @@
 
 namespace face {
 
-LocationTracker::LocationTracker(FaceDatabase& db) : db_(db) {
-}
+LocationTracker::LocationTracker(FaceDatabase& db) : db_(db) {}
 
-void LocationTracker::updateLocation(int64_t personId, int64_t zoneId, int64_t cameraId, int64_t timestamp) {
+void LocationTracker::updateLocation(int64_t personId, int64_t zoneId, int64_t cameraId,
+                                     int64_t timestamp) {
     std::lock_guard<std::mutex> lock(mutex_);
     db_.logLocation(personId, zoneId, cameraId, timestamp);
 
@@ -36,4 +36,4 @@ std::map<int64_t, LocationRecord> LocationTracker::getAllLocations() const {
     return locations_;
 }
 
-}  // namespace face
+} // namespace face

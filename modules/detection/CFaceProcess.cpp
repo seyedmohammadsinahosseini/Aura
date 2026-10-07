@@ -8,14 +8,13 @@
 face::CFaceProcess::CFaceProcess(
     const std::shared_ptr<FaceConfig>& config,
     std::map<std::string, std::shared_ptr<rt::tensorrt::Engine>>& tensorrtEngines)
-    : mDetector(config, tensorrtEngines), mRecognizer(config, tensorrtEngines) {
-}
+    : mDetector(config, tensorrtEngines), mRecognizer(config, tensorrtEngines) {}
 
-std::vector<face::SFace> face::CFaceProcess::GetBoxes(cv::Mat &frame) {
+std::vector<face::SFace> face::CFaceProcess::GetBoxes(cv::Mat& frame) {
     return mDetector.Inference(frame);
 }
 
-face::FeatureArray face::CFaceProcess::GetEmbeddings(const SFace &detection, cv::Mat &frame) {
+face::FeatureArray face::CFaceProcess::GetEmbeddings(const SFace& detection, cv::Mat& frame) {
     return NormalizeEmbedding(mRecognizer.ExtractEmbeddings(detection, frame));
 }
 
@@ -37,11 +36,8 @@ face::FeatureArray face::CFaceProcess::NormalizeEmbedding(const FeatureArray& em
     return normalized;
 }
 
-face::CFaceProcess::~CFaceProcess() {
-}
+face::CFaceProcess::~CFaceProcess() {}
 
 void face::CFaceProcess::SetDetectionConfidence(float thr) {
     mDetector.ConfidenceSet(thr);
-
 }
-

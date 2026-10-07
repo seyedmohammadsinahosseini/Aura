@@ -25,6 +25,6 @@ private:
     std::mutex mutex_{};
 };
 
-}  // namespace face
+} // namespace face
 
-#endif  // FACE_CPP_WORKSESSIONTRACKER_H
+#endif // FACE_CPP_WORKSESSIONTRACKER_H

@@ -30,6 +30,6 @@ private:
     mutable std::mutex mutex_{};
 };
 
-}  // namespace face
+} // namespace face
 
-#endif  // FACE_CPP_FACESEARCHER_H
+#endif // FACE_CPP_FACESEARCHER_H

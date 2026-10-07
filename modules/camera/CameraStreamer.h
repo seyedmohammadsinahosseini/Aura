@@ -11,43 +11,43 @@
 
 namespace camera {
 
-    class CameraStreamer {
-    public:
-        explicit CameraStreamer(const DeviceInfo& info, size_t bufferSize = 1);
-        ~CameraStreamer();
+class CameraStreamer {
+public:
+    explicit CameraStreamer(const DeviceInfo& info, size_t bufferSize = 1);
+    ~CameraStreamer();
 
-        // Prevent copying
-        CameraStreamer(const CameraStreamer&) = delete;
-        CameraStreamer& operator=(const CameraStreamer&) = delete;
+    // Prevent copying
+    CameraStreamer(const CameraStreamer&) = delete;
+    CameraStreamer& operator=(const CameraStreamer&) = delete;
 
-        bool start();
-        void stop();
-        
-        // Get the latest frame from memory
-        bool getLatestFrame(cv::Mat& frame, uint64_t& seq);
-        bool isRunning() const { return m_running; }
-        uint64_t frameSeq() const { return m_frameSeq; }
-        // Runtime stream adjustments
-        void setStreamParams(int fps, int width, int height);
+    bool start();
+    void stop();
 
-    private:
-        void captureLoop();
-        bool reopenCapture();
+    // Get the latest frame from memory
+    bool getLatestFrame(cv::Mat& frame, uint64_t& seq);
+    bool isRunning() const { return m_running; }
+    uint64_t frameSeq() const { return m_frameSeq; }
+    // Runtime stream adjustments
+    void setStreamParams(int fps, int width, int height);
 
-        DeviceInfo m_info;
-        cv::VideoCapture m_cap;
-        // runtime desired params
-        int m_desiredFps{0};
-        int m_desiredWidth{0};
-        int m_desiredHeight{0};
-        std::thread m_thread;
-        std::atomic<bool> m_running{false};
-        std::chrono::steady_clock::time_point m_lastFrameTime;
-        std::atomic<uint64_t> m_frameSeq{0};
+private:
+    void captureLoop();
+    bool reopenCapture();
 
-        // Using your project's safe_circular_buffer
-        std::unique_ptr<veera::safe_circular_buffer<cv::Mat>> m_frameBuffer;
-    };
-}
+    DeviceInfo m_info;
+    cv::VideoCapture m_cap;
+    // runtime desired params
+    int m_desiredFps{0};
+    int m_desiredWidth{0};
+    int m_desiredHeight{0};
+    std::thread m_thread;
+    std::atomic<bool> m_running{false};
+    std::chrono::steady_clock::time_point m_lastFrameTime;
+    std::atomic<uint64_t> m_frameSeq{0};
+
+    // Using your project's safe_circular_buffer
+    std::unique_ptr<backend::safe_circular_buffer<cv::Mat>> m_frameBuffer;
+};
+} // namespace camera
 
 #endif

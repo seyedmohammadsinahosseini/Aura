@@ -15,4 +15,4 @@ inline std::string WriteOnnxFile(const std::string& onnxPath) {
     return onnxPath;
 }
 
-#endif  // FACE_CPP_UTILS_H
+#endif // FACE_CPP_UTILS_H

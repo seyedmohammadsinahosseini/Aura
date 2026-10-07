@@ -10,6 +10,6 @@ public:
     void draw(cv::Mat& frame, const std::vector<SFace>& detections) const override;
 };
 
-}  // namespace face
+} // namespace face
 
-#endif  // FACE_CPP_DETECTIONDRAWER_H
+#endif // FACE_CPP_DETECTIONDRAWER_H

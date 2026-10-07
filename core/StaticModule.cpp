@@ -2,8 +2,7 @@
 
 namespace backend {
 
-StaticModule::StaticModule(std::string moduleName)
-    : module_name_(std::move(moduleName)) {}
+StaticModule::StaticModule(std::string moduleName) : module_name_(std::move(moduleName)) {}
 
 std::string StaticModule::name() const {
     return module_name_;

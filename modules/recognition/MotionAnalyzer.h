@@ -27,6 +27,6 @@ private:
     std::unordered_map<std::string, std::deque<cv::Point2f>> history_{};
 };
 
-}  // namespace face
+} // namespace face
 
-#endif  // FACE_CPP_MOTIONANALYZER_H
+#endif // FACE_CPP_MOTIONANALYZER_H

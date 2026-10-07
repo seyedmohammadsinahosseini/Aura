@@ -11,8 +11,7 @@ using json = nlohmann::json;
 namespace backend {
 
 CameraOrchestrator::CameraOrchestrator(std::shared_ptr<face::FaceConfig> config,
-                                       face::FaceDatabase* db,
-                                       CameraPreviewHub* previewHub,
+                                       face::FaceDatabase* db, CameraPreviewHub* previewHub,
                                        face::AttendanceManager* attendanceMgr)
     : config_(std::move(config)), db_(db), previewHub_(previewHub), attendanceMgr_(attendanceMgr) {
     faceSearcher_ = std::make_unique<face::FaceSearcher>();
@@ -21,7 +20,9 @@ CameraOrchestrator::CameraOrchestrator(std::shared_ptr<face::FaceConfig> config,
     }
 }
 
-CameraOrchestrator::~CameraOrchestrator() { stop(); }
+CameraOrchestrator::~CameraOrchestrator() {
+    stop();
+}
 
 void CameraOrchestrator::rebuildIndex() {
     if (db_ && faceSearcher_) {
@@ -38,10 +39,12 @@ void CameraOrchestrator::rebuildIndex() {
 }
 
 bool CameraOrchestrator::start() {
-    if (!db_) return false;
+    if (!db_)
+        return false;
     auto cameras = db_->getAllCameras();
     for (const auto& cam : cameras) {
-        if (shouldRunCamera(cam)) startWorker(cam.uid, cam);
+        if (shouldRunCamera(cam))
+            startWorker(cam.uid, cam);
     }
     return true;
 }
@@ -49,34 +52,41 @@ bool CameraOrchestrator::start() {
 void CameraOrchestrator::stop() {
     std::lock_guard<std::mutex> lock(workersMutex_);
     for (auto& [uid, worker] : workers_) {
-        if (!worker) continue;
+        if (!worker)
+            continue;
         worker->running = false;
-        if (worker->streamer) worker->streamer->stop();
-        if (worker->workerThread.joinable()) worker->workerThread.join();
+        if (worker->streamer)
+            worker->streamer->stop();
+        if (worker->workerThread.joinable())
+            worker->workerThread.join();
     }
     workers_.clear();
     cameraManager_.closeAll();
 }
 
 void CameraOrchestrator::notifyCameraActiveChanged(const std::string& cameraUid, bool active) {
-    if (!db_) return;
+    if (!db_)
+        return;
     if (!active) {
         stopWorker(cameraUid);
         return;
     }
 
     auto opt = db_->getCameraConfig(cameraUid);
-    if (!opt.has_value()) return;
+    if (!opt.has_value())
+        return;
     if (shouldRunCamera(*opt)) {
         startWorker(cameraUid, *opt);
     }
 }
 
 void CameraOrchestrator::notifyPreviewSubscriptionsChanged(const std::string& cameraUid) {
-    if (!db_) return;
+    if (!db_)
+        return;
 
     const auto cameraConfig = db_->getCameraConfig(cameraUid);
-    if (!cameraConfig.has_value()) return;
+    if (!cameraConfig.has_value())
+        return;
 
     if (shouldRunCamera(*cameraConfig)) {
         startWorker(cameraUid, *cameraConfig);
@@ -95,14 +105,16 @@ bool CameraOrchestrator::shouldRunCamera(const face::CameraConfig& camConfig) co
     return camConfig.aiEnabled || hasPreviewSubscribers;
 }
 
-void CameraOrchestrator::startWorker(const std::string& cameraUid, const face::CameraConfig& camConfig) {
+void CameraOrchestrator::startWorker(const std::string& cameraUid,
+                                     const face::CameraConfig& camConfig) {
     std::lock_guard<std::mutex> lock(workersMutex_);
-    if (workers_.count(cameraUid)) return;
+    if (workers_.count(cameraUid))
+        return;
 
     camera::DeviceInfo info;
     info.devicePath = camConfig.uid;
-    info.streamUri  = camConfig.streamUri.empty() ? camConfig.uid : camConfig.streamUri;
-    info.cardName   = camConfig.name;
+    info.streamUri = camConfig.streamUri.empty() ? camConfig.uid : camConfig.streamUri;
+    info.cardName = camConfig.name;
 
     // Auto-detect connection type from uid or streamUri if not explicitly set
     std::string connType = camConfig.connectionType;
@@ -119,7 +131,8 @@ void CameraOrchestrator::startWorker(const std::string& cameraUid, const face::C
         if (path.rfind("/dev/video", 0) == 0) {
             try {
                 info.index = std::stoi(path.substr(10));
-            } catch (...) {}
+            } catch (...) {
+            }
         }
     } else if (connType == "ONVIF") {
         info.type = camera::ConnectionType::ONVIF;
@@ -132,41 +145,50 @@ void CameraOrchestrator::startWorker(const std::string& cameraUid, const face::C
         camera::MediaProfileInfo profile;
         profile.encoding = camConfig.encoding;
         profile.streamUri = info.streamUri;
-        profile.width  = camConfig.preferredWidth;
+        profile.width = camConfig.preferredWidth;
         profile.height = camConfig.preferredHeight;
-        profile.fps    = camConfig.preferredFps;
+        profile.fps = camConfig.preferredFps;
         info.mediaProfiles.push_back(std::move(profile));
     }
 
-    info.preferredFps    = camConfig.preferredFps;
-    info.preferredWidth  = camConfig.preferredWidth;
+    info.preferredFps = camConfig.preferredFps;
+    info.preferredWidth = camConfig.preferredWidth;
     info.preferredHeight = camConfig.preferredHeight;
-    info.transportProtocol = camConfig.transportProtocol.empty() ? "tcp" : camConfig.transportProtocol;
+    info.transportProtocol =
+        camConfig.transportProtocol.empty() ? "tcp" : camConfig.transportProtocol;
 
     auto streamer = cameraManager_.openCamera(info);
-    if (!streamer) return;
+    if (!streamer)
+        return;
 
     auto worker = std::make_unique<CameraWorker>();
     worker->streamer = streamer;
     worker->pipeline = std::make_unique<face::FacePipeline>(config_);
     applyPipelineConfig(cameraUid, worker->pipeline.get());
     worker->running = true;
-    worker->workerThread = std::thread(&CameraOrchestrator::workerLoop, this, cameraUid, worker.get());
+    worker->workerThread =
+        std::thread(&CameraOrchestrator::workerLoop, this, cameraUid, worker.get());
 
     workers_[cameraUid] = std::move(worker);
 }
 
-void CameraOrchestrator::applyPipelineConfig(const std::string& cameraUid, face::FacePipeline* pipeline) {
-    if (!pipeline || !db_) return;
+void CameraOrchestrator::applyPipelineConfig(const std::string& cameraUid,
+                                             face::FacePipeline* pipeline) {
+    if (!pipeline || !db_)
+        return;
     try {
         auto maybeDet = db_->getCameraModuleConfig(cameraUid, std::string("detection"));
-        if (maybeDet.has_value()) pipeline->setDetectionEnabled(maybeDet->first);
+        if (maybeDet.has_value())
+            pipeline->setDetectionEnabled(maybeDet->first);
         auto maybeTrack = db_->getCameraModuleConfig(cameraUid, std::string("tracking"));
-        if (maybeTrack.has_value()) pipeline->setTrackingEnabled(maybeTrack->first);
+        if (maybeTrack.has_value())
+            pipeline->setTrackingEnabled(maybeTrack->first);
         auto maybeRec = db_->getCameraModuleConfig(cameraUid, std::string("recognition"));
-        if (maybeRec.has_value()) pipeline->setRecognitionEnabled(maybeRec->first);
+        if (maybeRec.has_value())
+            pipeline->setRecognitionEnabled(maybeRec->first);
         auto maybeLiv = db_->getCameraModuleConfig(cameraUid, std::string("liveness"));
-        if (maybeLiv.has_value()) pipeline->setLivenessEnabled(maybeLiv->first);
+        if (maybeLiv.has_value())
+            pipeline->setLivenessEnabled(maybeLiv->first);
         auto maybeQg = db_->getCameraModuleConfig(cameraUid, std::string("quality_gate"));
         if (maybeQg.has_value()) {
             pipeline->setQualityGateEnabled(maybeQg->first);
@@ -183,14 +205,16 @@ void CameraOrchestrator::applyPipelineConfig(const std::string& cameraUid, face:
                 float fh = qg.value("far_height_threshold", 0.12F);
                 float fw = qg.value("far_width_threshold", 0.12F);
                 pipeline->setFarThresholds(fh, fw);
-            } catch (...) {}
+            } catch (...) {
+            }
         }
 
         // Cache all module config params for real-time use
         std::lock_guard<std::mutex> lock(configMutex_);
         auto& params = cameraModuleConfigs_[cameraUid];
         params.clear();
-        for (const auto& moduleName : {"detection", "tracking", "recognition", "liveness", "quality_gate", "attendance"}) {
+        for (const auto& moduleName :
+             {"detection", "tracking", "recognition", "liveness", "quality_gate", "attendance"}) {
             const auto cfg = db_->getCameraModuleConfig(cameraUid, moduleName);
             if (cfg.has_value()) {
                 params[std::string(moduleName) + "_enabled"] = cfg->first ? "1" : "0";
@@ -198,20 +222,26 @@ void CameraOrchestrator::applyPipelineConfig(const std::string& cameraUid, face:
                 try {
                     const json j = json::parse(cfg->second);
                     for (auto it = j.begin(); it != j.end(); ++it) {
-                        if (it.value().is_string()) params[it.key()] = it.value().get<std::string>();
-                        else params[it.key()] = it.value().dump();
+                        if (it.value().is_string())
+                            params[it.key()] = it.value().get<std::string>();
+                        else
+                            params[it.key()] = it.value().dump();
                     }
-                } catch (...) {}
+                } catch (...) {
+                }
             }
         }
-    } catch (...) {}
+    } catch (...) {
+    }
 }
 
 void CameraOrchestrator::notifyCameraConfigChanged(const std::string& cameraUid) {
-    if (!db_) return;
+    if (!db_)
+        return;
 
     const auto cameraConfig = db_->getCameraConfig(cameraUid);
-    if (!cameraConfig.has_value()) return;
+    if (!cameraConfig.has_value())
+        return;
 
     if (!shouldRunCamera(*cameraConfig)) {
         stopWorker(cameraUid);
@@ -227,7 +257,8 @@ void CameraOrchestrator::notifyCameraConfigChanged(const std::string& cameraUid)
             // Lock is released before startWorker to avoid recursive mutex usage.
         } else {
             auto* worker = it->second.get();
-            if (!worker || !worker->pipeline) return;
+            if (!worker || !worker->pipeline)
+                return;
             applyPipelineConfig(cameraUid, worker->pipeline.get());
             return;
         }
@@ -248,8 +279,10 @@ void CameraOrchestrator::stopWorker(const std::string& cameraUid) {
     }
     if (w) {
         w->running = false;
-        if (w->streamer) w->streamer->stop();
-        if (w->workerThread.joinable()) w->workerThread.join();
+        if (w->streamer)
+            w->streamer->stop();
+        if (w->workerThread.joinable())
+            w->workerThread.join();
     }
 
     if (previewHub_) {
@@ -259,7 +292,8 @@ void CameraOrchestrator::stopWorker(const std::string& cameraUid) {
 }
 
 void CameraOrchestrator::workerLoop(const std::string& cameraUid, CameraWorker* worker) {
-    if (!worker) return;
+    if (!worker)
+        return;
 
     auto lastFpsTime = std::chrono::steady_clock::now();
     uint64_t lastFpsSeq = 0;
@@ -291,16 +325,16 @@ void CameraOrchestrator::workerLoop(const std::string& cameraUid, CameraWorker* 
             lastFpsTime = now;
         }
 
-        processFrame(cameraUid, std::move(frame), worker->pipeline.get(),
-                     worker->motionAnalyzer, currentFps);
+        processFrame(cameraUid, std::move(frame), worker->pipeline.get(), worker->motionAnalyzer,
+                     currentFps);
     }
 }
 
 void CameraOrchestrator::processFrame(const std::string& cameraUid, cv::Mat frame,
-                                       face::FacePipeline* pipeline,
-                                       face::MotionAnalyzer& motionAnalyzer,
-                                       float fps) {
-    if (!db_) return;
+                                      face::FacePipeline* pipeline,
+                                      face::MotionAnalyzer& motionAnalyzer, float fps) {
+    if (!db_)
+        return;
     try {
         const auto cameraConfig = db_->getCameraConfig(cameraUid);
         if (!cameraConfig.has_value() || !cameraConfig->streamEnabled) {
@@ -337,10 +371,11 @@ void CameraOrchestrator::processFrame(const std::string& cameraUid, cv::Mat fram
 }
 
 void CameraOrchestrator::matchDetections(const std::string& cameraUid,
-                                          std::vector<face::SFace>& detections,
-                                          face::MotionAnalyzer& motionAnalyzer,
-                                          face::CameraType camType) {
-    if (!db_ || !faceSearcher_ || faceSearcher_->size() == 0) return;
+                                         std::vector<face::SFace>& detections,
+                                         face::MotionAnalyzer& motionAnalyzer,
+                                         face::CameraType camType) {
+    if (!db_ || !faceSearcher_ || faceSearcher_->size() == 0)
+        return;
 
     float distanceThreshold = config_->Recognition().faissThreshold;
     {
@@ -350,7 +385,10 @@ void CameraOrchestrator::matchDetections(const std::string& cameraUid,
             const auto& params = camIt->second;
             const auto thIt = params.find("faiss_threshold");
             if (thIt != params.end()) {
-                try { distanceThreshold = std::stof(thIt->second); } catch (...) {}
+                try {
+                    distanceThreshold = std::stof(thIt->second);
+                } catch (...) {
+                }
             }
         }
     }
@@ -358,12 +396,13 @@ void CameraOrchestrator::matchDetections(const std::string& cameraUid,
     const auto ts = static_cast<int64_t>(std::time(nullptr));
 
     for (auto& detection : detections) {
-        if (!detection.face || !detection.mHasEmbedding) continue;
+        if (!detection.face || !detection.mHasEmbedding)
+            continue;
 
         motionAnalyzer.update(detection.mTrackID, detection.mBbox);
 
-        const auto embedding = std::vector<float>(
-            detection.mEmbedding.begin(), detection.mEmbedding.end());
+        const auto embedding =
+            std::vector<float>(detection.mEmbedding.begin(), detection.mEmbedding.end());
 
         float distance = 1.0f;
         const int64_t personId = faceSearcher_->search(embedding, distance);
@@ -389,7 +428,8 @@ void CameraOrchestrator::matchDetections(const std::string& cameraUid,
                         } else if (direction == face::Direction::OUT) {
                             attendanceMgr_->markDeparture(detection.mTrackID, personId, ts);
                         } else {
-                            const auto status = attendanceMgr_->getCurrentStatus(detection.mTrackID);
+                            const auto status =
+                                attendanceMgr_->getCurrentStatus(detection.mTrackID);
                             if (status == "IN") {
                                 attendanceMgr_->markDeparture(detection.mTrackID, personId, ts);
                             } else {
@@ -408,16 +448,19 @@ void CameraOrchestrator::matchDetections(const std::string& cameraUid,
 }
 
 std::string CameraOrchestrator::lookupPersonName(int64_t personId) const {
-    if (personId < 0 || !db_) return "Unknown";
+    if (personId < 0 || !db_)
+        return "Unknown";
     face::Person person;
-    if (!db_->getPerson(personId, person)) return "Person#" + std::to_string(personId);
-    if (!person.name.empty()) return person.name;
-    if (!person.code.empty()) return person.code;
+    if (!db_->getPerson(personId, person))
+        return "Person#" + std::to_string(personId);
+    if (!person.name.empty())
+        return person.name;
+    if (!person.code.empty())
+        return person.code;
     return "Person#" + std::to_string(personId);
 }
 
-void CameraOrchestrator::drawProcessedFrame(const std::string& cameraUid,
-                                            cv::Mat& frame,
+void CameraOrchestrator::drawProcessedFrame(const std::string& cameraUid, cv::Mat& frame,
                                             const std::vector<face::SFace>& detections) {
     face::ModuleHudConfig hudCfg;
     try {
@@ -425,10 +468,10 @@ void CameraOrchestrator::drawProcessedFrame(const std::string& cameraUid,
             const auto cfg = db_->getCameraModuleConfig(cameraUid, name);
             return cfg.has_value() ? cfg->first : defaultVal;
         };
-        hudCfg.detectionEnabled  = loadMod("detection", true);
-        hudCfg.trackingEnabled   = loadMod("tracking", true);
+        hudCfg.detectionEnabled = loadMod("detection", true);
+        hudCfg.trackingEnabled = loadMod("tracking", true);
         hudCfg.recognitionEnabled = loadMod("recognition", true);
-        hudCfg.livenessEnabled   = loadMod("liveness", true);
+        hudCfg.livenessEnabled = loadMod("liveness", true);
         hudCfg.qualityGateEnabled = loadMod("quality_gate", true);
 
         if (hudCfg.detectionEnabled) {
@@ -437,34 +480,43 @@ void CameraOrchestrator::drawProcessedFrame(const std::string& cameraUid,
         if (hudCfg.recognitionEnabled) {
             face::RecognitionDrawer{}.draw(frame, detections);
         }
-    } catch (...) {}
+    } catch (...) {
+    }
 
     face::ModuleHudDrawer(hudCfg).draw(frame);
 }
 
-void CameraOrchestrator::persistDetections(const std::string& cameraUid, const std::vector<face::SFace>& detections, const cv::Mat& frame) {
-    if (!db_) return;
+void CameraOrchestrator::persistDetections(const std::string& cameraUid,
+                                           const std::vector<face::SFace>& detections,
+                                           const cv::Mat& frame) {
+    if (!db_)
+        return;
     const std::string cropsDir = config_->Database().cropsDir;
 
     for (const auto& det : detections) {
-        if (!det.mHasEmbedding || !det.face) continue;
+        if (!det.mHasEmbedding || !det.face)
+            continue;
 
         // Always log raw detection
         face::RawDetection rd;
-        rd.personId  = det.mPersonId;
-        rd.trackId   = det.mTrackID;
+        rd.personId = det.mPersonId;
+        rd.trackId = det.mTrackID;
         rd.embedding.assign(det.mEmbedding.begin(), det.mEmbedding.end());
         rd.timestamp = static_cast<int64_t>(std::time(nullptr));
         rd.imagePath = "";
-        rd.status    = (det.mPersonId >= 0) ? "matched" : "new";
+        rd.status = (det.mPersonId >= 0) ? "matched" : "new";
         rd.confidence = det.mRecognitionConfidence;
-        try { db_->addRawDetection(rd); } catch (...) {}
+        try {
+            db_->addRawDetection(rd);
+        } catch (...) {
+        }
 
         if (det.mPersonId >= 0) {
             // Successfully identified — remove from unknown_faces if present
             try {
                 db_->deleteUnknownFaceByTrackId(det.mTrackID, cameraUid);
-            } catch (...) {}
+            } catch (...) {
+            }
             best_blur_score_per_track_.erase(det.mTrackID);
         } else {
             // Unknown person
@@ -480,7 +532,8 @@ void CameraOrchestrator::persistDetections(const std::string& cameraUid, const s
                     db_->addUnknownFace(
                         std::vector<float>(det.mEmbedding.begin(), det.mEmbedding.end()),
                         det.mTrackID, cameraUid, ts, cropPath);
-                } catch (...) {}
+                } catch (...) {
+                }
                 best_blur_score_per_track_[det.mTrackID] = det.mBlurScore;
             } else {
                 // Already exists — update embedding only if new frame is sharper
@@ -491,7 +544,8 @@ void CameraOrchestrator::persistDetections(const std::string& cameraUid, const s
                         db_->updateUnknownFaceEmbedding(
                             det.mTrackID, cameraUid,
                             std::vector<float>(det.mEmbedding.begin(), det.mEmbedding.end()));
-                    } catch (...) {}
+                    } catch (...) {
+                    }
                 }
             }
         }

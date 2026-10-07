@@ -2,19 +2,21 @@
 #include "core/utils.h"
 #include <float_image_tensor/include/float_image_tensor.h>
 
-face::CDetection::CDetection(const std::shared_ptr<FaceConfig>& config,
-                             std::map<std::string, std::shared_ptr<rt::tensorrt::Engine>> &tensorrtEngines) {
+face::CDetection::CDetection(
+    const std::shared_ptr<FaceConfig>& config,
+    std::map<std::string, std::shared_ptr<rt::tensorrt::Engine>>& tensorrtEngines) {
     using namespace rt;
     tensorrt::Logger logger(config->LogProvider(), config->LogCallback());
-    const std::string &enginePath = config->DetectionModelEngine();
-    const std::string &onnxPath = config->DetectionModelOnnx();
+    const std::string& enginePath = config->DetectionModelEngine();
+    const std::string& onnxPath = config->DetectionModelOnnx();
 
     if (enginePath.empty())
         throw std::runtime_error("Engine path cannot be empty");
 
     if (!tensorrtEngines.contains(enginePath)) {
         if (std::filesystem::exists(enginePath))
-            tensorrtEngines[enginePath] = std::make_shared<tensorrt::Engine>(logger, enginePath.data());
+            tensorrtEngines[enginePath] =
+                std::make_shared<tensorrt::Engine>(logger, enginePath.data());
         else {
             auto filename = WriteOnnxFile(onnxPath);
             nvinfer1::Dims4 minShape{1, 3, mModelShape.height, mModelShape.width};
@@ -23,23 +25,18 @@ face::CDetection::CDetection(const std::shared_ptr<FaceConfig>& config,
 
             std::size_t poolSize = 1ULL << 30; // 1GB GPU Memory
             std::string modelInputName = "input.1";
-            tensorrtEngines[enginePath] = std::make_shared<tensorrt::Engine>(logger,
-                                                                filename,
-                                                                modelInputName,
-                                                                minShape,
-                                                                optShape,
-                                                                maxShape,
-                                                                poolSize);
+            tensorrtEngines[enginePath] = std::make_shared<tensorrt::Engine>(
+                logger, filename, modelInputName, minShape, optShape, maxShape, poolSize);
             tensorrtEngines[enginePath]->SaveEngineToFile(enginePath);
         }
     }
 
-    mRuntime = std::make_unique<tensorrt::TensorRTRuntime>(std::move(tensorrtEngines[enginePath]), logger);
+    mRuntime =
+        std::make_unique<tensorrt::TensorRTRuntime>(std::move(tensorrtEngines[enginePath]), logger);
     ConfidenceSet(config->FaceDetectionThreshold());
 }
 void face::CDetection::ConfidenceSet(float thr) {
     mConfidenceThreshold = thr;
-
 }
 cv::Mat face::CDetection::Grid(int height, int width) {
     auto grid_x = cv::Mat(height, width, CV_32FC1);
@@ -59,7 +56,7 @@ cv::Mat face::CDetection::Grid(int height, int width) {
     return grid;
 }
 
-std::vector<cv::Point> face::CDetection::RepeatVector(const std::vector<cv::Point> &vec1) {
+std::vector<cv::Point> face::CDetection::RepeatVector(const std::vector<cv::Point>& vec1) {
     std::vector<cv::Point> vec2;
     for (cv::Point val : vec1) {
         for (int i = 0; i < 2; i++) {
@@ -70,10 +67,9 @@ std::vector<cv::Point> face::CDetection::RepeatVector(const std::vector<cv::Poin
 }
 
 std::vector<face::SFace>
-face::CDetection::Mat2vecConvertor(const cv::Mat &box,
-                                   const cv::Mat &scores,
-                                   const cv::Mat &k_point,
-                                   const std::vector<cv::Point> &keypointVector) const {
+face::CDetection::Mat2vecConvertor(const cv::Mat& box, const cv::Mat& scores,
+                                   const cv::Mat& k_point,
+                                   const std::vector<cv::Point>& keypointVector) const {
     int rows = box.rows;
     std::vector<SFace> faces;
     for (int i = 0; i < rows; i++) {
@@ -107,7 +103,7 @@ face::CDetection::Mat2vecConvertor(const cv::Mat &box,
     return faces;
 }
 
-cv::Mat face::CDetection::PrepareImage(const cv::Mat &image) {
+cv::Mat face::CDetection::PrepareImage(const cv::Mat& image) {
     cv::Size img_size = image.size();
     cv::Mat model_input = cv::Mat::zeros(mModelShape, CV_8UC3);
     cv::Size new_size;
@@ -128,20 +124,17 @@ cv::Mat face::CDetection::PrepareImage(const cv::Mat &image) {
     return model_input;
 }
 
-std::vector<face::SFace> face::CDetection::Forward(const cv::Mat &model_input) {
-    rt::tensorrt::FloatImageTensor
-        input_tensor(std::vector<cv::Mat>{model_input},
-                     mRuntime->GetInputShape(),
-                     true,
-                     1.f / 128.f,
-                     -127.5f / 128.f); //TODO: change to a batch of images
+std::vector<face::SFace> face::CDetection::Forward(const cv::Mat& model_input) {
+    rt::tensorrt::FloatImageTensor input_tensor(
+        std::vector<cv::Mat>{model_input}, mRuntime->GetInputShape(), true, 1.f / 128.f,
+        -127.5f / 128.f); //TODO: change to a batch of images
 
     mRuntime->Inference(input_tensor);
-    const auto &output_tensors = mRuntime->OutputTensors();
+    const auto& output_tensors = mRuntime->OutputTensors();
 
     std::vector<cv::Mat> outputs;
-    for (auto &output : output_tensors) {
-        const auto &shape = output->Shape();
+    for (auto& output : output_tensors) {
+        const auto& shape = output->Shape();
 
         cv::Mat outputMat;
         if (shape.nbDims == 2) {
@@ -151,12 +144,12 @@ std::vector<face::SFace> face::CDetection::Forward(const cv::Mat &model_input) {
         } else if (shape.nbDims == 3) {
             int height = shape.d[1];
             int width = shape.d[2];
-            int size[3] = {(int) shape.d[0], height, width};
+            int size[3] = {(int)shape.d[0], height, width};
             outputMat = cv::Mat(shape.nbDims, size, CV_32F, output->MutableData());
         } else if (shape.nbDims == 4) {
             int height = shape.d[2];
             int width = shape.d[3];
-            int size[3] = {(int) shape.d[1], height, width};
+            int size[3] = {(int)shape.d[1], height, width};
             outputMat = cv::Mat(shape.nbDims - 1, size, CV_32F, output->MutableData());
         }
         outputs.emplace_back(outputMat);
@@ -186,7 +179,7 @@ std::vector<face::SFace> face::CDetection::Forward(const cv::Mat &model_input) {
         copy(vec_bbox.begin(), vec_bbox.end(), std::back_inserter(faceBoxes));
     }
 
-    for (auto &item : faceBoxes) {
+    for (auto& item : faceBoxes) {
         boxes.emplace_back(item.mBbox);
         confidences.emplace_back(item.mConfidence);
         keyPoints.emplace_back(item.mKeypoint);
@@ -207,11 +200,11 @@ std::vector<face::SFace> face::CDetection::Forward(const cv::Mat &model_input) {
     return results;
 }
 
-std::vector<face::SFace> face::CDetection::Inference(cv::Mat &frame) {
+std::vector<face::SFace> face::CDetection::Inference(cv::Mat& frame) {
     cv::Mat image_processed = PrepareImage(frame);
     return Forward(image_processed);
 }
 
 face::CDetection::~CDetection() {
-//    mNet.reset();
+    //    mNet.reset();
 }

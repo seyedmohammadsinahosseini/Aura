@@ -6,15 +6,16 @@ face::CHead::CHead(const std::shared_ptr<face::FaceConfig>& config,
                    std::map<std::string, std::shared_ptr<rt::tensorrt::Engine>>& tensorrtEngines) {
     using namespace rt;
     tensorrt::Logger logger(config->LogProvider(), config->LogCallback());
-    const std::string &enginePath = config->HeadDetectionModelEngine();
-    const std::string &onnxPath = config->HeadDetectionModelOnnx();
+    const std::string& enginePath = config->HeadDetectionModelEngine();
+    const std::string& onnxPath = config->HeadDetectionModelOnnx();
 
     if (enginePath.empty())
         throw std::runtime_error("Engine path cannot be empty");
 
     if (!tensorrtEngines.contains(enginePath)) {
         if (std::filesystem::exists(enginePath))
-            tensorrtEngines[enginePath] = std::make_shared<tensorrt::Engine>(logger, enginePath.data());
+            tensorrtEngines[enginePath] =
+                std::make_shared<tensorrt::Engine>(logger, enginePath.data());
         else {
             auto filename = WriteOnnxFile(onnxPath);
             nvinfer1::Dims4 minShape{1, 3, mModelShape.height, mModelShape.width};
@@ -23,13 +24,8 @@ face::CHead::CHead(const std::shared_ptr<face::FaceConfig>& config,
 
             std::size_t poolSize = 1ULL << 30; // 1GB GPU Memory
             std::string modelInputName = "images";
-            tensorrtEngines[enginePath] = std::make_shared<tensorrt::Engine>(logger,
-                                                                             filename,
-                                                                             modelInputName,
-                                                                             minShape,
-                                                                             optShape,
-                                                                             maxShape,
-                                                                             poolSize);
+            tensorrtEngines[enginePath] = std::make_shared<tensorrt::Engine>(
+                logger, filename, modelInputName, minShape, optShape, maxShape, poolSize);
             tensorrtEngines[enginePath]->SaveEngineToFile(enginePath);
         }
     }
@@ -38,21 +34,21 @@ face::CHead::CHead(const std::shared_ptr<face::FaceConfig>& config,
     setConfidence(config->HeadDetectionThreshold());
 }
 
-std::any face::CHead::Inference(const cv::Mat &input) {
+std::any face::CHead::Inference(const cv::Mat& input) {
     cv::Mat modelInput = input;
     if (mLetterBoxForSquare && mModelShape.width == mModelShape.height)
         modelInput = FormatToSquare(modelInput);
 
     rt::tensorrt::FloatImageTensor input_tensor(std::vector<cv::Mat>{modelInput},
-                                                                                       mRuntime->GetInputShape(),
-                                                                                       true); //TODO: change to a batch of images
+                                                mRuntime->GetInputShape(),
+                                                true); //TODO: change to a batch of images
 
     mRuntime->Inference(input_tensor);
-    const auto &output_tensors = mRuntime->OutputTensors();
+    const auto& output_tensors = mRuntime->OutputTensors();
 
     std::vector<cv::Mat> outputs;
-    for (auto &output : output_tensors) {
-        const auto &shape = output->Shape();
+    for (auto& output : output_tensors) {
+        const auto& shape = output->Shape();
 
         cv::Mat outputMat;
         if (shape.nbDims == 2) {
@@ -62,12 +58,12 @@ std::any face::CHead::Inference(const cv::Mat &input) {
         } else if (shape.nbDims == 3) {
             int height = shape.d[1];
             int width = shape.d[2];
-            int size[3] = {(int) shape.d[0], height, width};
+            int size[3] = {(int)shape.d[0], height, width};
             outputMat = cv::Mat(shape.nbDims, size, CV_32F, output->MutableData());
         } else if (shape.nbDims == 4) {
             int height = shape.d[2];
             int width = shape.d[3];
-            int size[3] = {(int) shape.d[1], height, width};
+            int size[3] = {(int)shape.d[1], height, width};
             outputMat = cv::Mat(shape.nbDims - 1, size, CV_32F, output->MutableData());
         }
         outputs.emplace_back(outputMat);
@@ -88,7 +84,7 @@ std::any face::CHead::Inference(const cv::Mat &input) {
         outputs[0] = outputs[0].reshape(1, dimensions);
         cv::transpose(outputs[0], outputs[0]);
     }
-    float *data_output = (float *) outputs[0].data;
+    float* data_output = (float*)outputs[0].data;
 
     float x_factor = modelInput.cols / mModelShape.width;
     float y_factor = modelInput.rows / mModelShape.height;
@@ -99,7 +95,7 @@ std::any face::CHead::Inference(const cv::Mat &input) {
 
     for (int i = 0; i < rows; ++i) {
         if (yolov8) {
-            float *classes_scores = data_output + 4;
+            float* classes_scores = data_output + 4;
 
             cv::Mat scores(1, mClasses.size(), CV_32FC1, classes_scores);
             cv::Point class_id;
@@ -129,7 +125,7 @@ std::any face::CHead::Inference(const cv::Mat &input) {
             float confidence = data_output[4];
 
             if (confidence >= mModelConfidenceThreshold) {
-                float *classes_scores = data_output + 5;
+                float* classes_scores = data_output + 5;
 
                 cv::Mat scores(1, mClasses.size(), CV_32FC1, classes_scores);
                 cv::Point class_id;
@@ -161,7 +157,8 @@ std::any face::CHead::Inference(const cv::Mat &input) {
     }
 
     std::vector<int> nms_result;
-    cv::dnn::NMSBoxes(boxes, confidences, mModelConfidenceThreshold, mModelNMSThreshold, nms_result);
+    cv::dnn::NMSBoxes(boxes, confidences, mModelConfidenceThreshold, mModelNMSThreshold,
+                      nms_result);
 
     const uint16_t MAX_WIDTH = 200;
     const uint16_t MAX_HEIGHT = 200;
@@ -175,8 +172,8 @@ std::any face::CHead::Inference(const cv::Mat &input) {
         result.classId = class_ids[idx];
         result.confidence = confidences[idx];
 
-//        std::random_device rd;
-//        std::uniform_int_distribution<int> dis(100, 255);
+        //        std::random_device rd;
+        //        std::uniform_int_distribution<int> dis(100, 255);
         result.x1 = boxes[idx].x;
         result.y1 = boxes[idx].y;
         result.width = boxes[idx].width;
@@ -190,7 +187,7 @@ std::any face::CHead::Inference(const cv::Mat &input) {
     return detections;
 }
 
-cv::Mat face::CHead::FormatToSquare(const cv::Mat &source) {
+cv::Mat face::CHead::FormatToSquare(const cv::Mat& source) {
     int col = source.cols;
     int row = source.rows;
     int _max = MAX(col, row);
@@ -200,10 +197,9 @@ cv::Mat face::CHead::FormatToSquare(const cv::Mat &source) {
 }
 
 face::CHead::~CHead() {
-//    mNet.reset();
+    //    mNet.reset();
 }
 
-void face::CHead::setConfidence(const float &confidence) {
+void face::CHead::setConfidence(const float& confidence) {
     mModelConfidenceThreshold = confidence;
-
 }

@@ -57,4 +57,4 @@ private:
     std::unordered_map<std::string, PreviewFrame> latestFrames_{};
 };
 
-}  // namespace backend
+} // namespace backend

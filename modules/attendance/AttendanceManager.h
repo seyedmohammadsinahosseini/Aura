@@ -21,7 +21,8 @@ public:
         int64_t arrivalTime{0};
     };
 
-    AttendanceManager(FaceDatabase& db, WorkSessionTracker& workSessionTracker, const AttendanceConfig& defaults);
+    AttendanceManager(FaceDatabase& db, WorkSessionTracker& workSessionTracker,
+                      const AttendanceConfig& defaults);
 
     bool markArrival(const std::string& trackId, int64_t personId, int64_t timestamp);
     bool markDeparture(const std::string& trackId, int64_t personId, int64_t timestamp);
@@ -40,6 +41,6 @@ private:
     void logTardinessIfNeeded(int64_t personId, int64_t timestamp);
 };
 
-}  // namespace face
+} // namespace face
 
-#endif  // FACE_CPP_ATTENDANCEMANAGER_H
+#endif // FACE_CPP_ATTENDANCEMANAGER_H

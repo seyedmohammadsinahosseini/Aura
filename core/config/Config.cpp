@@ -43,10 +43,7 @@ std::unordered_map<std::string, std::string> flattenParameters(const nlohmann::j
     return values;
 }
 
-std::string ResolveRelativePath(
-    const std::string& value,
-    const std::filesystem::path& configPath
-) {
+std::string ResolveRelativePath(const std::string& value, const std::filesystem::path& configPath) {
     if (value.empty()) {
         return value;
     }
@@ -81,7 +78,7 @@ std::string ResolveRelativePath(
     return NormalizePath(rawPath);
 }
 
-}  // namespace
+} // namespace
 
 FaceConfig::FaceConfig(const std::string& configPath)
     : config_path_(configPath),
@@ -120,7 +117,8 @@ void FaceConfig::Load() {
             detection_model_onnx_ = models.value("detection_onnx", detection_model_onnx_);
             detection_model_engine_ = models.value("detection_engine", detection_model_engine_);
             recognition_model_onnx_ = models.value("recognition_onnx", recognition_model_onnx_);
-            recognition_model_engine_ = models.value("recognition_engine", recognition_model_engine_);
+            recognition_model_engine_ =
+                models.value("recognition_engine", recognition_model_engine_);
             head_model_onnx_ = models.value("head_onnx", head_model_onnx_);
             head_model_engine_ = models.value("head_engine", head_model_engine_);
         }
@@ -154,12 +152,14 @@ void FaceConfig::Load() {
             motion_buffer_frames_ = motion.value("buffer_frames", motion_buffer_frames_);
             motion_diff_threshold_ = motion.value("diff_threshold", motion_diff_threshold_);
             motion_blur_kernel_size_ = motion.value("blur_kernel_size", motion_blur_kernel_size_);
-            motion_dilate_kernel_size_ = motion.value("dilate_kernel_size", motion_dilate_kernel_size_);
+            motion_dilate_kernel_size_ =
+                motion.value("dilate_kernel_size", motion_dilate_kernel_size_);
         }
 
         if (config.contains("pipeline")) {
             const auto& pipeline = config["pipeline"];
-            embedding_queue_max_size_ = pipeline.value("embedding_queue_max_size", embedding_queue_max_size_);
+            embedding_queue_max_size_ =
+                pipeline.value("embedding_queue_max_size", embedding_queue_max_size_);
         }
 
         if (config.contains("database")) {
@@ -172,16 +172,22 @@ void FaceConfig::Load() {
 
         if (config.contains("recognition")) {
             const auto& recognition = config["recognition"];
-            recognition_.faissThreshold = recognition.value("faiss_threshold", recognition_.faissThreshold);
-            recognition_.motionWindowSize = recognition.value("motion_window_size", recognition_.motionWindowSize);
-            recognition_.motionThresholdPx = recognition.value("motion_threshold_px", recognition_.motionThresholdPx);
+            recognition_.faissThreshold =
+                recognition.value("faiss_threshold", recognition_.faissThreshold);
+            recognition_.motionWindowSize =
+                recognition.value("motion_window_size", recognition_.motionWindowSize);
+            recognition_.motionThresholdPx =
+                recognition.value("motion_threshold_px", recognition_.motionThresholdPx);
         }
 
         if (config.contains("attendance")) {
             const auto& attendance = config["attendance"];
-            attendance_.defaultArrival = attendance.value("default_arrival", attendance_.defaultArrival);
-            attendance_.defaultDeparture = attendance.value("default_departure", attendance_.defaultDeparture);
-            attendance_.lateGraceMinutes = attendance.value("late_grace_minutes", attendance_.lateGraceMinutes);
+            attendance_.defaultArrival =
+                attendance.value("default_arrival", attendance_.defaultArrival);
+            attendance_.defaultDeparture =
+                attendance.value("default_departure", attendance_.defaultDeparture);
+            attendance_.lateGraceMinutes =
+                attendance.value("late_grace_minutes", attendance_.lateGraceMinutes);
         }
 
         if (config.contains("license")) {
@@ -217,48 +223,114 @@ void FaceConfig::Load() {
     }
 }
 
-bool FaceConfig::IsValid() const { return valid_; }
+bool FaceConfig::IsValid() const {
+    return valid_;
+}
 
-const std::string& FaceConfig::DetectionModelOnnx() const { return detection_model_onnx_; }
-const std::string& FaceConfig::DetectionModelEngine() const { return detection_model_engine_; }
-float FaceConfig::FaceDetectionThreshold() const { return detection_threshold_; }
+const std::string& FaceConfig::DetectionModelOnnx() const {
+    return detection_model_onnx_;
+}
+const std::string& FaceConfig::DetectionModelEngine() const {
+    return detection_model_engine_;
+}
+float FaceConfig::FaceDetectionThreshold() const {
+    return detection_threshold_;
+}
 
-const std::string& FaceConfig::RecognitionModelOnnx() const { return recognition_model_onnx_; }
-const std::string& FaceConfig::RecognitionModelEngine() const { return recognition_model_engine_; }
+const std::string& FaceConfig::RecognitionModelOnnx() const {
+    return recognition_model_onnx_;
+}
+const std::string& FaceConfig::RecognitionModelEngine() const {
+    return recognition_model_engine_;
+}
 
-const std::string& FaceConfig::HeadDetectionModelOnnx() const { return head_model_onnx_; }
-const std::string& FaceConfig::HeadDetectionModelEngine() const { return head_model_engine_; }
-float FaceConfig::HeadDetectionThreshold() const { return head_threshold_; }
+const std::string& FaceConfig::HeadDetectionModelOnnx() const {
+    return head_model_onnx_;
+}
+const std::string& FaceConfig::HeadDetectionModelEngine() const {
+    return head_model_engine_;
+}
+float FaceConfig::HeadDetectionThreshold() const {
+    return head_threshold_;
+}
 
-int FaceConfig::TrackerBuffer() const { return track_buffer_; }
-float FaceConfig::TrackerThreshold() const { return track_threshold_; }
-float FaceConfig::TrackerHighThreshold() const { return track_high_threshold_; }
-float FaceConfig::TrackerMatchThreshold() const { return track_match_threshold_; }
+int FaceConfig::TrackerBuffer() const {
+    return track_buffer_;
+}
+float FaceConfig::TrackerThreshold() const {
+    return track_threshold_;
+}
+float FaceConfig::TrackerHighThreshold() const {
+    return track_high_threshold_;
+}
+float FaceConfig::TrackerMatchThreshold() const {
+    return track_match_threshold_;
+}
 
-float FaceConfig::FarHeightThreshold() const { return far_height_threshold_; }
-float FaceConfig::FarWidthThreshold() const { return far_width_threshold_; }
-int FaceConfig::MotionAreaThreshold() const { return motion_area_threshold_; }
-int FaceConfig::MotionBufferFrames() const { return motion_buffer_frames_; }
-int FaceConfig::MotionDiffThreshold() const { return motion_diff_threshold_; }
-int FaceConfig::MotionBlurKernelSize() const { return motion_blur_kernel_size_; }
-int FaceConfig::MotionDilateKernelSize() const { return motion_dilate_kernel_size_; }
-float FaceConfig::HeadFaceIouThreshold() const { return head_face_iou_threshold_; }
-int FaceConfig::EmbeddingQueueMaxSize() const { return embedding_queue_max_size_; }
-const DatabaseConfig& FaceConfig::Database() const { return database_; }
-const RecognitionConfig& FaceConfig::Recognition() const { return recognition_; }
-const AttendanceConfig& FaceConfig::Attendance() const { return attendance_; }
-const std::unordered_map<std::string, ModuleConfig>& FaceConfig::Modules() const { return modules_; }
-const std::string& FaceConfig::LicensePath() const { return license_path_; }
+float FaceConfig::FarHeightThreshold() const {
+    return far_height_threshold_;
+}
+float FaceConfig::FarWidthThreshold() const {
+    return far_width_threshold_;
+}
+int FaceConfig::MotionAreaThreshold() const {
+    return motion_area_threshold_;
+}
+int FaceConfig::MotionBufferFrames() const {
+    return motion_buffer_frames_;
+}
+int FaceConfig::MotionDiffThreshold() const {
+    return motion_diff_threshold_;
+}
+int FaceConfig::MotionBlurKernelSize() const {
+    return motion_blur_kernel_size_;
+}
+int FaceConfig::MotionDilateKernelSize() const {
+    return motion_dilate_kernel_size_;
+}
+float FaceConfig::HeadFaceIouThreshold() const {
+    return head_face_iou_threshold_;
+}
+int FaceConfig::EmbeddingQueueMaxSize() const {
+    return embedding_queue_max_size_;
+}
+const DatabaseConfig& FaceConfig::Database() const {
+    return database_;
+}
+const RecognitionConfig& FaceConfig::Recognition() const {
+    return recognition_;
+}
+const AttendanceConfig& FaceConfig::Attendance() const {
+    return attendance_;
+}
+const std::unordered_map<std::string, ModuleConfig>& FaceConfig::Modules() const {
+    return modules_;
+}
+const std::string& FaceConfig::LicensePath() const {
+    return license_path_;
+}
 
-bool FaceConfig::GetQualityGateEnabled() const { return quality_gate_enabled_; }
-bool FaceConfig::GetUseBlurGate() const { return use_blur_gate_; }
-float FaceConfig::GetBlurThreshold() const { return blur_threshold_; }
-bool FaceConfig::GetUseSideProfileGate() const { return use_side_profile_gate_; }
-bool FaceConfig::GetUseFarDistanceGate() const { return use_far_distance_gate_; }
+bool FaceConfig::GetQualityGateEnabled() const {
+    return quality_gate_enabled_;
+}
+bool FaceConfig::GetUseBlurGate() const {
+    return use_blur_gate_;
+}
+float FaceConfig::GetBlurThreshold() const {
+    return blur_threshold_;
+}
+bool FaceConfig::GetUseSideProfileGate() const {
+    return use_side_profile_gate_;
+}
+bool FaceConfig::GetUseFarDistanceGate() const {
+    return use_far_distance_gate_;
+}
 
-const std::string& FaceConfig::LogProvider() const { return log_provider_; }
+const std::string& FaceConfig::LogProvider() const {
+    return log_provider_;
+}
 const xbox::base_component::monitoring::log::LogCallback& FaceConfig::LogCallback() const {
     return log_callback_;
 }
 
-}  // namespace face
+} // namespace face

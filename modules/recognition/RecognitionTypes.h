@@ -103,6 +103,6 @@ struct MotionConfig {
     bool useVertical{false};
 };
 
-}  // namespace face
+} // namespace face
 
-#endif  // FACE_CPP_RECOGNITIONTYPES_H
+#endif // FACE_CPP_RECOGNITIONTYPES_H

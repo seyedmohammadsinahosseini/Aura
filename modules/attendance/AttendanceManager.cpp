@@ -30,17 +30,16 @@ int64_t buildTimestampForToday(const int64_t timestamp, const std::string& hhmm)
     return static_cast<int64_t>(std::mktime(&localTime));
 }
 
-}  // namespace
+} // namespace
 
 namespace face {
 
-AttendanceManager::AttendanceManager(FaceDatabase& db,
-                                     WorkSessionTracker& workSessionTracker,
+AttendanceManager::AttendanceManager(FaceDatabase& db, WorkSessionTracker& workSessionTracker,
                                      const AttendanceConfig& defaults)
-    : db_(db), workSessionTracker_(workSessionTracker), defaults_(defaults) {
-}
+    : db_(db), workSessionTracker_(workSessionTracker), defaults_(defaults) {}
 
-bool AttendanceManager::markArrival(const std::string& trackId, int64_t personId, int64_t timestamp) {
+bool AttendanceManager::markArrival(const std::string& trackId, int64_t personId,
+                                    int64_t timestamp) {
     std::lock_guard<std::mutex> lock(mutex_);
     auto& state = tracks_[trackId];
     if (state.arrived) {
@@ -56,7 +55,8 @@ bool AttendanceManager::markArrival(const std::string& trackId, int64_t personId
     return true;
 }
 
-bool AttendanceManager::markDeparture(const std::string& trackId, int64_t personId, int64_t timestamp) {
+bool AttendanceManager::markDeparture(const std::string& trackId, int64_t personId,
+                                      int64_t timestamp) {
     std::lock_guard<std::mutex> lock(mutex_);
     const auto it = tracks_.find(trackId);
     if (it == tracks_.end() || !it->second.arrived) {
@@ -85,7 +85,8 @@ std::string AttendanceManager::getCurrentStatus(const std::string& trackId) {
     return it->second.arrived ? "IN" : "OUT";
 }
 
-std::optional<AttendanceManager::TrackState> AttendanceManager::getTrackState(const std::string& trackId) {
+std::optional<AttendanceManager::TrackState>
+AttendanceManager::getTrackState(const std::string& trackId) {
     std::lock_guard<std::mutex> lock(mutex_);
     const auto it = tracks_.find(trackId);
     if (it == tracks_.end()) {
@@ -133,4 +134,4 @@ void AttendanceManager::logTardinessIfNeeded(int64_t personId, int64_t timestamp
     db_.logTardiness(record);
 }
 
-}  // namespace face
+} // namespace face

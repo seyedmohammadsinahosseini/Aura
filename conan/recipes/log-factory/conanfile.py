@@ -7,6 +7,7 @@ from pathlib import Path
 
 class LogFactoryMonitoring(ConanFile):
     name = "log-factory"
+    version = "1.0.0"
     package_type = "header-library"
     settings = "os", "compiler", "build_type", "arch"
     exports_sources = "CMakeLists.txt", "cmake/*", "project/*", "build_config.yaml"
@@ -53,7 +54,7 @@ class LogFactoryMonitoring(ConanFile):
 
     def requirements(self):
         self.requires("fmt/11.1.4", transitive_headers=True, transitive_libs=True)
-        self.requires("log-entry/1.0.0-4-83193b47", transitive_headers=True, transitive_libs=True)
+        self.requires("log-entry/1.0.0", transitive_headers=True, transitive_libs=True)
 
     def package_info(self):
         self.cpp_info.set_property("cmake_file_name", "log_factory")

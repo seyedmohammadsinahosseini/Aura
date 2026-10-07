@@ -1,5 +1,8 @@
 #include "Sha1.h"
+
+#include <cstdint>
 #include <cstring>
+#include <vector>
 
 namespace crypto {
 
@@ -14,9 +17,10 @@ std::string sha1(const std::string& input) {
     uint32_t h3 = 0x10325476;
     uint32_t h4 = 0xC3D2E1F0;
 
-    uint64_t ml = input.size() * 8;
+    const uint64_t ml = static_cast<uint64_t>(input.size()) * 8ULL;
     size_t paddedLen = ((input.size() + 8) / 64 + 1) * 64;
-    uint8_t* padded = new uint8_t[paddedLen]();
+    std::vector<uint8_t> buffer(paddedLen, 0);
+    uint8_t* padded = buffer.data();
     std::memcpy(padded, input.data(), input.size());
     padded[input.size()] = 0x80;
     for (int i = 0; i < 8; ++i)
@@ -26,9 +30,8 @@ std::string sha1(const std::string& input) {
         uint32_t w[80];
         for (int i = 0; i < 16; ++i)
             w[i] = ((uint32_t)padded[chunk + i * 4] << 24) |
-                   ((uint32_t)padded[chunk + i * 4 + 1] << 16) |
-                   ((uint32_t)padded[chunk + i * 4 + 2] << 8) |
-                   ((uint32_t)padded[chunk + i * 4 + 3]);
+                ((uint32_t)padded[chunk + i * 4 + 1] << 16) |
+                ((uint32_t)padded[chunk + i * 4 + 2] << 8) | ((uint32_t)padded[chunk + i * 4 + 3]);
 
         for (int i = 16; i < 80; ++i)
             w[i] = leftRotate(w[i - 3] ^ w[i - 8] ^ w[i - 14] ^ w[i - 16], 1);
@@ -59,10 +62,12 @@ std::string sha1(const std::string& input) {
             a = temp;
         }
 
-        h0 += a; h1 += b; h2 += c; h3 += d; h4 += e;
+        h0 += a;
+        h1 += b;
+        h2 += c;
+        h3 += d;
+        h4 += e;
     }
-
-    delete[] padded;
 
     std::string result;
     result.reserve(20);
@@ -72,7 +77,11 @@ std::string sha1(const std::string& input) {
         result += (v >> 8) & 0xFF;
         result += v & 0xFF;
     };
-    add(h0); add(h1); add(h2); add(h3); add(h4);
+    add(h0);
+    add(h1);
+    add(h2);
+    add(h3);
+    add(h4);
     return result;
 }
 

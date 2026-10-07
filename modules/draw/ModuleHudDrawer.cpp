@@ -13,8 +13,7 @@ static const cv::Scalar kRed(0, 0, 200);
 static const cv::Scalar kWhite(255, 255, 255);
 static const cv::Scalar kBg(0, 0, 0, 180);
 
-ModuleHudDrawer::ModuleHudDrawer(const ModuleHudConfig& config)
-    : config_(config) {}
+ModuleHudDrawer::ModuleHudDrawer(const ModuleHudConfig& config) : config_(config) {}
 
 void ModuleHudDrawer::draw(cv::Mat& frame) const {
     struct HudEntry {
@@ -23,11 +22,9 @@ void ModuleHudDrawer::draw(cv::Mat& frame) const {
     };
 
     const HudEntry entries[] = {
-        {"DETECTION", config_.detectionEnabled},
-        {"TRACKING",  config_.trackingEnabled},
-        {"RECOGNITION", config_.recognitionEnabled},
-        {"LIVENESS",  config_.livenessEnabled},
-        {"QUALITY",   config_.qualityGateEnabled},
+        {"DETECTION", config_.detectionEnabled},     {"TRACKING", config_.trackingEnabled},
+        {"RECOGNITION", config_.recognitionEnabled}, {"LIVENESS", config_.livenessEnabled},
+        {"QUALITY", config_.qualityGateEnabled},
     };
 
     const int numEntries = sizeof(entries) / sizeof(entries[0]);
@@ -45,8 +42,7 @@ void ModuleHudDrawer::draw(cv::Mat& frame) const {
     cv::rectangle(frame, bgRect, cv::Scalar(60, 60, 60), 1);
 
     // Title
-    cv::putText(frame, "MODULES",
-                cv::Point(x0 + kHudPadding, y0 + kHudPadding + 14),
+    cv::putText(frame, "MODULES", cv::Point(x0 + kHudPadding, y0 + kHudPadding + 14),
                 cv::FONT_HERSHEY_SIMPLEX, 0.5, kWhite, 1);
 
     // Module entries
@@ -55,20 +51,17 @@ void ModuleHudDrawer::draw(cv::Mat& frame) const {
         const auto& entry = entries[i];
 
         // Status indicator circle
-        cv::circle(frame,
-                   cv::Point(x0 + kHudPadding + 6, y - 4),
-                   4, entry.enabled ? kGreen : kRed, cv::FILLED);
+        cv::circle(frame, cv::Point(x0 + kHudPadding + 6, y - 4), 4, entry.enabled ? kGreen : kRed,
+                   cv::FILLED);
 
         // Module name
-        cv::putText(frame, entry.label,
-                    cv::Point(x0 + kHudPadding + 18, y),
+        cv::putText(frame, entry.label, cv::Point(x0 + kHudPadding + 18, y),
                     cv::FONT_HERSHEY_SIMPLEX, kHudFontScale, kWhite, 1);
 
         // ON/OFF text
         cv::putText(frame, entry.enabled ? "ON" : "OFF",
-                    cv::Point(x0 + boxWidth - kHudPadding - 30, y),
-                    cv::FONT_HERSHEY_SIMPLEX, kHudFontScale,
-                    entry.enabled ? kGreen : kRed, kHudThickness);
+                    cv::Point(x0 + boxWidth - kHudPadding - 30, y), cv::FONT_HERSHEY_SIMPLEX,
+                    kHudFontScale, entry.enabled ? kGreen : kRed, kHudThickness);
     }
 }
 

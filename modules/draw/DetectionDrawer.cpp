@@ -9,4 +9,4 @@ void DetectionDrawer::draw(cv::Mat& frame, const std::vector<SFace>& detections)
     }
 }
 
-}  // namespace face
+} // namespace face

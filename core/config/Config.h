@@ -15,7 +15,7 @@ struct ModuleConfig {
 
 struct DatabaseConfig {
     std::string path{"attendance.db"};
-    std::string cropsDir{"data/crops"};
+    std::string cropsDir{"crops"};
 };
 
 struct RecognitionConfig {
@@ -123,6 +123,6 @@ private:
     void Load();
 };
 
-}  // namespace face
+} // namespace face
 
-#endif  // FACE_CPP_FACECONFIG_H
+#endif // FACE_CPP_FACECONFIG_H

@@ -24,12 +24,10 @@ std::chrono::system_clock::time_point parseDate(const std::string& value) {
 } // namespace
 
 bool EntitlementSet::canLoad(const std::string& moduleName) const {
-    return allowedModules.count(moduleName) > 0 &&
-           std::chrono::system_clock::now() < expiry;
+    return allowedModules.count(moduleName) > 0 && std::chrono::system_clock::now() < expiry;
 }
 
-LicenseManager::LicenseManager(std::string licensePath)
-    : license_path_(std::move(licensePath)) {
+LicenseManager::LicenseManager(std::string licensePath) : license_path_(std::move(licensePath)) {
     reload();
 }
 

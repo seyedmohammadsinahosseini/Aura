@@ -30,20 +30,23 @@ namespace camera {
 static std::vector<std::string> getVideoDevicePaths() {
     std::vector<std::string> paths;
     try {
-        if (!fs::exists("/dev")) return paths;
+        if (!fs::exists("/dev"))
+            return paths;
         for (const auto& entry : fs::directory_iterator("/dev")) {
             std::string name = entry.path().filename().string();
             if (name.compare(0, 5, "video") == 0)
                 paths.push_back(entry.path().string());
         }
         std::sort(paths.begin(), paths.end());
-    } catch (...) {}
+    } catch (...) {
+    }
     return paths;
 }
 
 static bool isRealVideoDevice(int fd) {
     v4l2_capability cap;
-    if (ioctl(fd, VIDIOC_QUERYCAP, &cap) < 0) return false;
+    if (ioctl(fd, VIDIOC_QUERYCAP, &cap) < 0)
+        return false;
     uint32_t caps = (cap.capabilities & V4L2_CAP_DEVICE_CAPS) ? cap.device_caps : cap.capabilities;
     return (caps & V4L2_CAP_VIDEO_CAPTURE) != 0;
 }
@@ -52,7 +55,8 @@ std::vector<DeviceInfo> CameraDiscovery::discoverLocal() {
     std::vector<DeviceInfo> result;
     for (const auto& path : getVideoDevicePaths()) {
         int fd = open(path.c_str(), O_RDWR | O_NONBLOCK);
-        if (fd < 0) continue;
+        if (fd < 0)
+            continue;
         if (isRealVideoDevice(fd)) {
             v4l2_capability cap;
             ioctl(fd, VIDIOC_QUERYCAP, &cap);
@@ -63,7 +67,11 @@ std::vector<DeviceInfo> CameraDiscovery::discoverLocal() {
             info.driver = reinterpret_cast<const char*>(cap.driver);
             info.type = ConnectionType::LOCAL;
             info.isVideoCapture = true;
-            try { info.index = std::stoi(path.substr(10)); } catch (...) { info.index = -1; }
+            try {
+                info.index = std::stoi(path.substr(10));
+            } catch (...) {
+                info.index = -1;
+            }
             result.push_back(info);
         }
         close(fd);
@@ -73,7 +81,8 @@ std::vector<DeviceInfo> CameraDiscovery::discoverLocal() {
 
 bool CameraDiscovery::isPortOpen(const std::string& ip, int port, int timeoutMs) {
     int fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (fd < 0) return false;
+    if (fd < 0)
+        return false;
 
     struct sockaddr_in addr{};
     addr.sin_family = AF_INET;
@@ -97,7 +106,8 @@ bool CameraDiscovery::isPortOpen(const std::string& ip, int port, int timeoutMs)
 
 bool CameraDiscovery::isOnvifEndpoint(const std::string& ip, int port, int timeoutMs) {
     int fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (fd < 0) return false;
+    if (fd < 0)
+        return false;
 
     struct sockaddr_in addr{};
     addr.sin_family = AF_INET;
@@ -114,24 +124,29 @@ bool CameraDiscovery::isOnvifEndpoint(const std::string& ip, int port, int timeo
     FD_ZERO(&fdset);
     FD_SET(fd, &fdset);
     bool connected = (select(fd + 1, nullptr, &fdset, nullptr, &tv) == 1);
-    if (!connected) { close(fd); return false; }
+    if (!connected) {
+        close(fd);
+        return false;
+    }
 
-    std::string soapBody =
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-        "<s:Envelope xmlns:s=\"http://www.w3.org/2003/05/soap-envelope\" "
-        "xmlns:tds=\"http://www.onvif.org/ver10/device/wsdl\">"
-        "<s:Body>"
-        "<tds:GetCapabilities>"
-        "<tds:Category>All</tds:Category>"
-        "</tds:GetCapabilities>"
-        "</s:Body>"
-        "</s:Envelope>";
+    std::string soapBody = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                           "<s:Envelope xmlns:s=\"http://www.w3.org/2003/05/soap-envelope\" "
+                           "xmlns:tds=\"http://www.onvif.org/ver10/device/wsdl\">"
+                           "<s:Body>"
+                           "<tds:GetCapabilities>"
+                           "<tds:Category>All</tds:Category>"
+                           "</tds:GetCapabilities>"
+                           "</s:Body>"
+                           "</s:Envelope>";
 
-    std::string request =
-        "POST /onvif/device_service HTTP/1.1\r\n"
-        "Host: " + ip + ":" + std::to_string(port) + "\r\n"
+    std::string request = "POST /onvif/device_service HTTP/1.1\r\n"
+                          "Host: " +
+        ip + ":" + std::to_string(port) +
+        "\r\n"
         "Content-Type: application/soap+xml; charset=utf-8\r\n"
-        "Content-Length: " + std::to_string(soapBody.size()) + "\r\n"
+        "Content-Length: " +
+        std::to_string(soapBody.size()) +
+        "\r\n"
         "Connection: close\r\n"
         "\r\n" +
         soapBody;
@@ -146,14 +161,15 @@ bool CameraDiscovery::isOnvifEndpoint(const std::string& ip, int port, int timeo
     char buf[1024];
     while (true) {
         int n = read(fd, buf, sizeof(buf));
-        if (n <= 0) break;
+        if (n <= 0)
+            break;
         response.append(buf, n);
     }
     close(fd);
 
     return response.find("Envelope") != std::string::npos ||
-           response.find("SOAP-ENV") != std::string::npos ||
-           response.find("http://www.onvif.org") != std::string::npos;
+        response.find("SOAP-ENV") != std::string::npos ||
+        response.find("http://www.onvif.org") != std::string::npos;
 }
 
 bool CameraDiscovery::populateOnvifMetadata(DeviceInfo& info) {
@@ -195,13 +211,15 @@ bool CameraDiscovery::populateOnvifMetadata(DeviceInfo& info) {
         }
         return true;
     } catch (const std::exception& e) {
-        std::cerr << "  ONVIF metadata failed for " << info.devicePath << ": " << e.what() << std::endl;
+        std::cerr << "  ONVIF metadata failed for " << info.devicePath << ": " << e.what()
+                  << std::endl;
         return false;
     }
 }
 
 bool CameraDiscovery::probeIp(const std::string& ip, int port, DeviceInfo& outInfo) {
-    if (!isOnvifEndpoint(ip, port, 1500)) return false;
+    if (!isOnvifEndpoint(ip, port, 1500))
+        return false;
 
     outInfo.devicePath = ip;
     outInfo.type = ConnectionType::ONVIF;
@@ -216,9 +234,9 @@ bool CameraDiscovery::probeIp(const std::string& ip, int port, DeviceInfo& outIn
     return true;
 }
 
-std::vector<DeviceInfo> CameraDiscovery::probeOnvifEndpoints(
-    const std::vector<std::string>& ips, int port, int timeoutMs, int maxThreads) {
-
+std::vector<DeviceInfo> CameraDiscovery::probeOnvifEndpoints(const std::vector<std::string>& ips,
+                                                             int port, int timeoutMs,
+                                                             int maxThreads) {
     std::vector<DeviceInfo> results;
     std::mutex resultsMutex;
     std::atomic<int> nextIdx{0};
@@ -227,9 +245,11 @@ std::vector<DeviceInfo> CameraDiscovery::probeOnvifEndpoints(
     auto worker = [&]() {
         while (true) {
             int idx = nextIdx.fetch_add(1);
-            if (idx >= totalIps) break;
+            if (idx >= totalIps)
+                break;
 
-            if (!isPortOpen(ips[idx], port, timeoutMs)) continue;
+            if (!isPortOpen(ips[idx], port, timeoutMs))
+                continue;
 
             DeviceInfo info;
             if (probeIp(ips[idx], port, info)) {
@@ -251,22 +271,38 @@ std::vector<DeviceInfo> CameraDiscovery::probeOnvifEndpoints(
 
 static const char* kCommonRtspPaths[] = {
     "/live",
-    "/stream1", "/stream2", "/stream3",
-    "/ch1/main/av_stream", "/ch2/main/av_stream",
-    "/cam/realmonitor", "/cam/realmonitor?channel=1&subtype=0",
-    "/video1", "/video2", "/video3",
-    "/h264", "/h264ESVideoTrack",
-    "/mpeg4", "/mpeg4media",
+    "/stream1",
+    "/stream2",
+    "/stream3",
+    "/ch1/main/av_stream",
+    "/ch2/main/av_stream",
+    "/cam/realmonitor",
+    "/cam/realmonitor?channel=1&subtype=0",
+    "/video1",
+    "/video2",
+    "/video3",
+    "/h264",
+    "/h264ESVideoTrack",
+    "/mpeg4",
+    "/mpeg4media",
     "/media",
     "/video",
-    "/1", "/2", "/3",
-    "/live/ch0", "/live/ch1",
-    "/live/main", "/live/sub",
+    "/1",
+    "/2",
+    "/3",
+    "/live/ch0",
+    "/live/ch1",
+    "/live/main",
+    "/live/sub",
     "/onvif-media",
-    "/Streaming/Channels/101", "/Streaming/Channels/102",
-    "/av0", "/av1",
-    "/live0", "/live1",
-    "/main", "/sub",
+    "/Streaming/Channels/101",
+    "/Streaming/Channels/102",
+    "/av0",
+    "/av1",
+    "/live0",
+    "/live1",
+    "/main",
+    "/sub",
     "/H264?channel=1&subtype=0",
     "/h264/ch1/main/av_stream",
 };
@@ -292,14 +328,18 @@ std::string CameraDiscovery::tryRtspDescribe(const std::string& url, int timeout
         auto colonPos = hostPart.find(':');
         if (colonPos != std::string::npos) {
             host = hostPart.substr(0, colonPos);
-            try { port = std::stoi(hostPart.substr(colonPos + 1)); } catch (...) {}
+            try {
+                port = std::stoi(hostPart.substr(colonPos + 1));
+            } catch (...) {
+            }
         } else {
             host = hostPart;
         }
     }
 
     int fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (fd < 0) return {};
+    if (fd < 0)
+        return {};
 
     struct sockaddr_in addr{};
     addr.sin_family = AF_INET;
@@ -320,8 +360,8 @@ std::string CameraDiscovery::tryRtspDescribe(const std::string& url, int timeout
         return {};
     }
 
-    std::string req =
-        "DESCRIBE " + url + " RTSP/1.0\r\n"
+    std::string req = "DESCRIBE " + url +
+        " RTSP/1.0\r\n"
         "CSeq: 1\r\n"
         "Accept: application/sdp\r\n"
         "Connection: close\r\n"
@@ -337,7 +377,8 @@ std::string CameraDiscovery::tryRtspDescribe(const std::string& url, int timeout
     char buf[4096];
     while (true) {
         int n = read(fd, buf, sizeof(buf));
-        if (n <= 0) break;
+        if (n <= 0)
+            break;
         response.append(buf, n);
     }
 
@@ -376,16 +417,15 @@ std::vector<std::string> CameraDiscovery::generateIpRange(const std::string& sub
 }
 
 std::vector<std::string> CameraDiscovery::generateCommonSubnets() {
-    return {
-        "192.168.0", "192.168.1", "192.168.2", "192.168.10",
-        "10.0.0", "10.0.1",
-        "172.16.0", "172.17.0"
-    };
+    return {"192.168.0", "192.168.1", "192.168.2", "192.168.10",
+            "10.0.0",    "10.0.1",    "172.16.0",  "172.17.0"};
 }
 
-bool CameraDiscovery::isIpInAnySubnet(const std::string& ip, const std::vector<std::string>& subnets) {
+bool CameraDiscovery::isIpInAnySubnet(const std::string& ip,
+                                      const std::vector<std::string>& subnets) {
     for (const auto& sn : subnets) {
-        if (ip.compare(0, sn.length(), sn) == 0) return true;
+        if (ip.compare(0, sn.length(), sn) == 0)
+            return true;
     }
     return false;
 }
@@ -393,11 +433,14 @@ bool CameraDiscovery::isIpInAnySubnet(const std::string& ip, const std::vector<s
 static std::vector<std::string> getLocalSubnets() {
     std::set<std::string> subnets;
     struct ifaddrs* ifaddr = nullptr;
-    if (getifaddrs(&ifaddr) < 0) return {};
+    if (getifaddrs(&ifaddr) < 0)
+        return {};
 
     for (struct ifaddrs* ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next) {
-        if (!ifa->ifa_addr || ifa->ifa_addr->sa_family != AF_INET) continue;
-        if (ifa->ifa_flags & IFF_LOOPBACK) continue;
+        if (!ifa->ifa_addr || ifa->ifa_addr->sa_family != AF_INET)
+            continue;
+        if (ifa->ifa_flags & IFF_LOOPBACK)
+            continue;
 
         struct sockaddr_in* sin = (struct sockaddr_in*)ifa->ifa_addr;
         struct sockaddr_in* mask = (struct sockaddr_in*)ifa->ifa_netmask;
@@ -427,9 +470,9 @@ std::vector<DeviceInfo> CameraDiscovery::discoverOnvif(int timeoutMs, bool deepS
     {
         auto wsDevices = onvif::OnvifDiscovery::probe(std::min(timeoutMs, 3000));
         for (auto& d : wsDevices) {
-            if (!seenIps.insert(d.ip).second) continue;
-            std::cout << "    Found ONVIF device: " << d.ip
-                      << " (" << d.name << ")" << std::endl;
+            if (!seenIps.insert(d.ip).second)
+                continue;
+            std::cout << "    Found ONVIF device: " << d.ip << " (" << d.name << ")" << std::endl;
 
             // Convert DiscoveredDevice → DeviceInfo, populate metadata
             {
@@ -449,8 +492,8 @@ std::vector<DeviceInfo> CameraDiscovery::discoverOnvif(int timeoutMs, bool deepS
                     std::cout << "      Metadata fetch timed out" << std::endl;
                 } else {
                     t.join();
-                    if (f.get() && !info.mediaProfiles.empty()
-                        && !info.mediaProfiles[0].streamUri.empty()) {
+                    if (f.get() && !info.mediaProfiles.empty() &&
+                        !info.mediaProfiles[0].streamUri.empty()) {
                         info.streamUri = info.mediaProfiles[0].streamUri;
                         std::cout << "      Stream: " << info.streamUri << std::endl;
                     }
@@ -465,7 +508,8 @@ std::vector<DeviceInfo> CameraDiscovery::discoverOnvif(int timeoutMs, bool deepS
     if (deepSearch) {
         std::cout << "  Phase 2: RTSP fallback scan..." << std::endl;
         auto localSubnets = getLocalSubnets();
-        if (localSubnets.empty()) localSubnets = {"192.168.1"};
+        if (localSubnets.empty())
+            localSubnets = {"192.168.1"};
 
         std::vector<std::string> allIps;
         for (const auto& sn : localSubnets)
@@ -480,7 +524,8 @@ std::vector<DeviceInfo> CameraDiscovery::discoverOnvif(int timeoutMs, bool deepS
         auto scanWorker = [&]() {
             while (true) {
                 int i = scanIdx.fetch_add(1);
-                if (i >= (int)allIps.size()) break;
+                if (i >= (int)allIps.size())
+                    break;
                 if (CameraDiscovery::isPortOpen(allIps[i], 554, 200)) {
                     std::lock_guard<std::mutex> l(liveMutex);
                     liveHosts.insert(allIps[i]);
@@ -489,14 +534,17 @@ std::vector<DeviceInfo> CameraDiscovery::discoverOnvif(int timeoutMs, bool deepS
         };
 
         std::vector<std::thread> workers;
-        for (int i = 0; i < nThreads; ++i) workers.emplace_back(scanWorker);
-        for (auto& t : workers) t.join();
+        for (int i = 0; i < nThreads; ++i)
+            workers.emplace_back(scanWorker);
+        for (auto& t : workers)
+            t.join();
 
         std::cout << "    Found " << liveHosts.size() << " hosts with port 554 open" << std::endl;
 
         std::vector<std::string> rtspIps;
         for (const auto& ip : liveHosts)
-            if (!seenIps.count(ip)) rtspIps.push_back(ip);
+            if (!seenIps.count(ip))
+                rtspIps.push_back(ip);
 
         if (!rtspIps.empty()) {
             std::atomic<int> probeIdx{0};
@@ -506,7 +554,8 @@ std::vector<DeviceInfo> CameraDiscovery::discoverOnvif(int timeoutMs, bool deepS
             auto probeWorker = [&]() {
                 while (true) {
                     int i = probeIdx.fetch_add(1);
-                    if (i >= (int)rtspIps.size()) break;
+                    if (i >= (int)rtspIps.size())
+                        break;
                     auto paths = CameraDiscovery::probeRtspPaths(rtspIps[i], 800);
                     if (!paths.empty()) {
                         DeviceInfo info;
@@ -521,8 +570,10 @@ std::vector<DeviceInfo> CameraDiscovery::discoverOnvif(int timeoutMs, bool deepS
             };
 
             std::vector<std::thread> pWorkers;
-            for (int i = 0; i < pThreads; ++i) pWorkers.emplace_back(probeWorker);
-            for (auto& t : pWorkers) t.join();
+            for (int i = 0; i < pThreads; ++i)
+                pWorkers.emplace_back(probeWorker);
+            for (auto& t : pWorkers)
+                t.join();
         }
     }
 

@@ -33,19 +33,20 @@ public:
     explicit FaceAuthenticator(const std::shared_ptr<FaceConfig>& config);
 
     std::vector<SFace> processFrame(const std::string& cameraUid, cv::Mat& frame);
-    void drawFrame(const std::string& cameraUid, cv::Mat& frame, const std::vector<SFace>& detections);
+    void drawFrame(const std::string& cameraUid, cv::Mat& frame,
+                   const std::vector<SFace>& detections);
     void reloadIndex();
     void reloadRuntimeSettings();
 
-    int64_t enrollPerson(const std::string& name, const std::string& code, const std::vector<float>& emb);
-    int64_t addPerson(const std::string& name, const std::string& code, const cv::Mat& image, std::vector<float>& emb);
+    int64_t enrollPerson(const std::string& name, const std::string& code,
+                         const std::vector<float>& emb);
+    int64_t addPerson(const std::string& name, const std::string& code, const cv::Mat& image,
+                      std::vector<float>& emb);
     void addReferenceEmbedding(int64_t personId, const std::vector<float>& emb);
     int64_t identify(const std::vector<float>& emb, float& confidence);
 
-    void processDetection(face::SFace& face,
-                          const std::string& trackId,
-                          const std::string& cameraUid,
-                          int64_t timestamp,
+    void processDetection(face::SFace& face, const std::string& trackId,
+                          const std::string& cameraUid, int64_t timestamp,
                           const cv::Mat& originalFrame);
     void onTrackLost(const std::string& trackId);
     void ResetUnknownCropCache();
@@ -53,12 +54,10 @@ public:
     int64_t upsertCamera(const CameraConfig& camera);
     std::optional<CameraConfig> getCameraConfig(const std::string& cameraUid);
     std::vector<CameraConfig> getAllCameras();
-    std::optional<std::pair<bool, std::string>> getCameraModuleConfig(const std::string& cameraUid,
-                                                                      const std::string& moduleName);
-    void setCameraModuleConfig(const std::string& cameraUid,
-                               const std::string& moduleName,
-                               bool enabled,
-                               const std::string& configJson);
+    std::optional<std::pair<bool, std::string>>
+    getCameraModuleConfig(const std::string& cameraUid, const std::string& moduleName);
+    void setCameraModuleConfig(const std::string& cameraUid, const std::string& moduleName,
+                               bool enabled, const std::string& configJson);
 
     void upsertSchedule(const PersonSchedule& schedule);
     std::optional<PersonSchedule> getPersonSchedule(int64_t personId);
@@ -97,19 +96,17 @@ private:
     void applyRuntimeModules(const std::string& cameraUid, CameraRuntime& runtime);
     static void registerBuiltInModules(backend::PluginRegistry& registry);
     static backend::ModuleConfig toBackendConfig(const face::ModuleConfig& config);
-    static backend::ModuleConfig mergeModuleConfig(
-        const backend::ModuleConfig& baseConfig,
-        const std::optional<std::pair<bool, std::string>>& overrideConfig);
-    static bool isModuleRunning(const backend::PluginRegistry& registry, const std::string& moduleName);
+    static backend::ModuleConfig
+    mergeModuleConfig(const backend::ModuleConfig& baseConfig,
+                      const std::optional<std::pair<bool, std::string>>& overrideConfig);
+    static bool isModuleRunning(const backend::PluginRegistry& registry,
+                                const std::string& moduleName);
     static bool boolValue(const std::unordered_map<std::string, std::string>& params,
-                          const std::string& key,
-                          bool fallback);
+                          const std::string& key, bool fallback);
     static int intValue(const std::unordered_map<std::string, std::string>& params,
-                        const std::string& key,
-                        int fallback);
+                        const std::string& key, int fallback);
     static float floatValue(const std::unordered_map<std::string, std::string>& params,
-                            const std::string& key,
-                            float fallback);
+                            const std::string& key, float fallback);
     static std::string lookupPersonName(FaceDatabase& db, int64_t personId);
     static std::vector<float> toVector(const FeatureArray& embedding);
     static int64_t currentUnixTimestamp();
@@ -126,6 +123,6 @@ private:
     std::unordered_set<std::string> unknown_cropped_track_ids_;
 };
 
-}  // namespace face
+} // namespace face
 
-#endif  // FACE_CPP_FACEAUTHENTICATOR_H
+#endif // FACE_CPP_FACEAUTHENTICATOR_H

@@ -14,6 +14,6 @@ public:
     virtual void draw(cv::Mat& frame, const std::vector<SFace>& detections) const = 0;
 };
 
-}  // namespace face
+} // namespace face
 
-#endif  // FACE_CPP_IFRAMEDRAWER_H
+#endif // FACE_CPP_IFRAMEDRAWER_H

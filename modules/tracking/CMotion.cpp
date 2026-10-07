@@ -1,14 +1,13 @@
 #include "CMotion.h"
 
 face::CMotion::CMotion(const FaceConfig& config)
-    : mMotionThreshold(config.MotionAreaThreshold()),
-      mMotionBuffer(config.MotionBufferFrames()),
+    : mMotionThreshold(config.MotionAreaThreshold()), mMotionBuffer(config.MotionBufferFrames()),
       mMotionDiffThreshold(config.MotionDiffThreshold()),
       mMotionBlurKernelSize(config.MotionBlurKernelSize()),
-      mMotionDilateKernelSize(config.MotionDilateKernelSize()) {
-}
+      mMotionDilateKernelSize(config.MotionDilateKernelSize()) {}
 
-void face::CMotion::updateConfig(int motionThreshold, int motionBuffer, int motionDiffThreshold, int blurKernel, int dilateKernel) {
+void face::CMotion::updateConfig(int motionThreshold, int motionBuffer, int motionDiffThreshold,
+                                 int blurKernel, int dilateKernel) {
     mMotionThreshold = motionThreshold;
     mMotionBuffer = motionBuffer;
     mMotionDiffThreshold = motionDiffThreshold;
@@ -19,9 +18,7 @@ void face::CMotion::updateConfig(int motionThreshold, int motionBuffer, int moti
 cv::Mat face::CMotion::Convert2Gray(const cv::Mat& rgbImage) const {
     cv::Mat grayImage;
     cv::cvtColor(rgbImage, grayImage, cv::COLOR_BGR2GRAY);
-    cv::GaussianBlur(grayImage,
-                     grayImage,
-                     cv::Size(mMotionBlurKernelSize, mMotionBlurKernelSize),
+    cv::GaussianBlur(grayImage, grayImage, cv::Size(mMotionBlurKernelSize, mMotionBlurKernelSize),
                      0);
     return grayImage;
 }
@@ -32,7 +29,8 @@ bool face::CMotion::DetectMotion(const cv::Mat& firstFrame, const cv::Mat& secon
     cv::absdiff(firstFrame, secondFrame, frameDelta);
 
     cv::Mat kernel = cv::Mat::ones(mMotionDilateKernelSize, mMotionDilateKernelSize, CV_8U);
-    cv::dilate(frameDelta, frameDelta, kernel, cv::Point(-1, -1), 1, cv::BORDER_CONSTANT, cv::morphologyDefaultBorderValue());
+    cv::dilate(frameDelta, frameDelta, kernel, cv::Point(-1, -1), 1, cv::BORDER_CONSTANT,
+               cv::morphologyDefaultBorderValue());
 
     cv::Mat thresh;
     cv::threshold(frameDelta, thresh, mMotionDiffThreshold, 255, cv::THRESH_BINARY);
@@ -70,6 +68,4 @@ bool face::CMotion::PrepareMotionResult(const cv::Mat& frame) {
     return motionFlag;
 }
 
-face::CMotion::~CMotion() {
-}
-
+face::CMotion::~CMotion() {}

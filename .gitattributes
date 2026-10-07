@@ -1,0 +1,42 @@
+# Normalize line endings: LF in the repository and in checkouts on every OS.
+* text=auto eol=lf
+
+# Source and build files
+*.cpp     text eol=lf diff=cpp
+*.h       text eol=lf diff=cpp
+*.cc      text eol=lf diff=cpp
+*.hpp     text eol=lf diff=cpp
+*.py      text eol=lf diff=python
+*.sh      text eol=lf
+*.cmake   text eol=lf
+CMakeLists.txt text eol=lf
+*.txt     text eol=lf
+*.yml     text eol=lf
+*.yaml    text eol=lf
+*.json    text eol=lf
+*.sql     text eol=lf
+*.md      text eol=lf diff=markdown
+
+# Documentation images and assets
+docs/images/** binary
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.svg       text
+*.pdf       binary
+
+# Vendored third-party code: exclude from language statistics (so the reported mix
+# reflects first-party sources) and from diffs, since reviewing an upstream header
+# line by line is not useful. Documentation inside third_party/ stays reviewable.
+third_party/**           linguist-vendored
+third_party/**/*.h       -diff
+third_party/**/*.hpp     -diff
+third_party/**/*.cpp     -diff
+conan/recipes/tensorrt-runtime/** linguist-vendored=false
+*.min.* binary
+
+# Generated / binary artifacts must never be merged silently
+*.db binary
+*.engine binary
+*.onnx binary

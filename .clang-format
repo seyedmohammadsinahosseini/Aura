@@ -1,0 +1,52 @@
+# Style for first-party C++ sources. `scripts/format.sh` enforces it and CI
+# checks it, so review diffs stay about behaviour instead of whitespace.
+# Vendored code opts out through third_party/.clang-format.
+---
+BasedOnStyle: LLVM
+Language: Cpp
+Standard: c++20
+
+IndentWidth: 4
+ContinuationIndentWidth: 4
+TabWidth: 4
+UseTab: Never
+AccessModifierOffset: -4
+
+ColumnLimit: 100
+
+IndentCaseLabels: true
+IndentGotoLabels: false
+IndentExternBlock: NoIndent
+NamespaceIndentation: None
+AlwaysBreakAfterReturnType: None
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+BreakBeforeBraces: Attach
+Cpp11BracedListStyle: true
+PointerAlignment: Left
+DerivePointerAlignment: false
+ReferenceAlignment: Left
+AlignAfterOpenBracket: Align
+AlignOperands: DontAlign
+AlignTrailingComments: true
+AllowAllArgumentsOnNextLine: true
+BinPackArguments: true
+BinPackParameters: true
+AllowAllParametersOfDeclarationOnNextLine: true
+SpaceBeforeParens: ControlStatementsExceptControlMacros
+SpacesInSquareBrackets: false
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 2
+
+# Include order is meaningful in this project (some headers rely on preceding
+# includes), so sorting is disabled rather than "corrected".
+SortIncludes: Never
+IncludeBlocks: Preserve
+
+ReflowComments: false
+# Keep string literals whole: never split a literal across lines (SQL, SOAP envelopes).
+BreakStringLiterals: false
+FixNamespaceComments: true
+SortUsingDeclarations: false

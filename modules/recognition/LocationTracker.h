@@ -25,6 +25,6 @@ private:
     std::map<int64_t, LocationRecord> locations_{};
 };
 
-}  // namespace face
+} // namespace face
 
-#endif  // FACE_CPP_LOCATIONTRACKER_H
+#endif // FACE_CPP_LOCATIONTRACKER_H

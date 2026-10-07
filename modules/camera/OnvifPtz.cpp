@@ -16,8 +16,7 @@
 
 namespace onvif {
 
-OnvifPtz::OnvifPtz(const std::string& ptzServiceUrl,
-                   const std::string& username,
+OnvifPtz::OnvifPtz(const std::string& ptzServiceUrl, const std::string& username,
                    const std::string& password)
     : ptzUrl_(ptzServiceUrl), username_(username), password_(password) {}
 
@@ -35,8 +34,10 @@ std::string OnvifPtz::base64Encode(const std::string& input) {
             valb -= 6;
         }
     }
-    if (valb > -6) out.push_back(b64[((val << 8) >> (valb + 8)) & 0x3F]);
-    while (out.size() % 4) out.push_back('=');
+    if (valb > -6)
+        out.push_back(b64[((val << 8) >> (valb + 8)) & 0x3F]);
+    while (out.size() % 4)
+        out.push_back('=');
     return out;
 }
 
@@ -45,9 +46,12 @@ std::string OnvifPtz::base64Decode(const std::string& input) {
     static bool init = false;
     if (!init) {
         std::fill(kDecode, kDecode + 256, 0xFF);
-        for (int c = 'A'; c <= 'Z'; ++c) kDecode[(unsigned char)c] = c - 'A';
-        for (int c = 'a'; c <= 'z'; ++c) kDecode[(unsigned char)c] = c - 'a' + 26;
-        for (int c = '0'; c <= '9'; ++c) kDecode[(unsigned char)c] = c - '0' + 52;
+        for (int c = 'A'; c <= 'Z'; ++c)
+            kDecode[(unsigned char)c] = c - 'A';
+        for (int c = 'a'; c <= 'z'; ++c)
+            kDecode[(unsigned char)c] = c - 'a' + 26;
+        for (int c = '0'; c <= '9'; ++c)
+            kDecode[(unsigned char)c] = c - '0' + 52;
         kDecode[(unsigned char)'+'] = 62;
         kDecode[(unsigned char)'/'] = 63;
         init = true;
@@ -56,7 +60,8 @@ std::string OnvifPtz::base64Decode(const std::string& input) {
     std::string out;
     int val = 0, valb = -8;
     for (unsigned char c : input) {
-        if (kDecode[c] == 0xFF) continue;
+        if (kDecode[c] == 0xFF)
+            continue;
         val = (val << 6) + kDecode[c];
         valb += 6;
         if (valb >= 0) {
@@ -68,7 +73,8 @@ std::string OnvifPtz::base64Decode(const std::string& input) {
 }
 
 std::string OnvifPtz::buildWsseHeader() const {
-    if (username_.empty()) return {};
+    if (username_.empty())
+        return {};
 
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -79,51 +85,50 @@ std::string OnvifPtz::buildWsseHeader() const {
         nonceRaw += static_cast<char>(dist(gen));
 
     auto now = std::chrono::system_clock::now();
-    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-                  now.time_since_epoch()) % 1000;
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
     auto t = std::chrono::system_clock::to_time_t(now);
     std::tm tm;
     gmtime_r(&t, &tm);
     char timeBuf[32];
     std::strftime(timeBuf, sizeof(timeBuf), "%Y-%m-%dT%H:%M:%S", &tm);
-    std::string created = std::string(timeBuf) + "." +
-                          std::to_string(ms.count()) + "Z";
+    std::string created = std::string(timeBuf) + "." + std::to_string(ms.count()) + "Z";
 
     std::string digestInput = nonceRaw + created + password_;
     std::string hash = crypto::sha1(digestInput);
     std::string digest = base64Encode(hash);
     std::string nonceB64 = base64Encode(nonceRaw);
 
-    return
-        "<soap:Header>"
-        "<wsse:Security xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/"
-        "oasis-200401-wss-wssecurity-secext-1.0.xsd\" "
-        "xmlns:wsu=\"http://docs.oasis-open.org/wss/2004/01/"
-        "oasis-200401-wss-wssecurity-utility-1.0.xsd\">"
-        "<wsse:UsernameToken wsu:Id=\"UsernameToken-1\">"
-        "<wsse:Username>" + username_ + "</wsse:Username>"
+    return "<soap:Header>"
+           "<wsse:Security xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/"
+           "oasis-200401-wss-wssecurity-secext-1.0.xsd\" "
+           "xmlns:wsu=\"http://docs.oasis-open.org/wss/2004/01/"
+           "oasis-200401-wss-wssecurity-utility-1.0.xsd\">"
+           "<wsse:UsernameToken wsu:Id=\"UsernameToken-1\">"
+           "<wsse:Username>" +
+        username_ +
+        "</wsse:Username>"
         "<wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/"
-        "oasis-200401-wss-username-token-profile-1.0#PasswordDigest\">"
-        + digest + "</wsse:Password>"
+        "oasis-200401-wss-username-token-profile-1.0#PasswordDigest\">" +
+        digest +
+        "</wsse:Password>"
         "<wsse:Nonce EncodingType=\"http://docs.oasis-open.org/wss/2004/01/"
-        "oasis-200401-wss-soap-message-security-1.0#Base64Binary\">"
-        + nonceB64 + "</wsse:Nonce>"
-        "<wsu:Created>" + created + "</wsu:Created>"
+        "oasis-200401-wss-soap-message-security-1.0#Base64Binary\">" +
+        nonceB64 +
+        "</wsse:Nonce>"
+        "<wsu:Created>" +
+        created +
+        "</wsu:Created>"
         "</wsse:UsernameToken>"
         "</wsse:Security>"
         "</soap:Header>";
 }
 
 std::string OnvifPtz::buildSoapEnvelope(const std::string& extraNs,
-                                         const std::string& bodyXml) const {
-    return
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-        "<soap:Envelope "
-        "xmlns:soap=\"http://www.w3.org/2003/05/soap-envelope\" "
-        + extraNs + ">"
-        + buildWsseHeader() +
-        "<soap:Body>"
-        + bodyXml +
+                                        const std::string& bodyXml) const {
+    return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+           "<soap:Envelope "
+           "xmlns:soap=\"http://www.w3.org/2003/05/soap-envelope\" " +
+        extraNs + ">" + buildWsseHeader() + "<soap:Body>" + bodyXml +
         "</soap:Body>"
         "</soap:Envelope>";
 }
@@ -158,13 +163,15 @@ static int connectToHost(const std::string& url) {
     int fd = -1;
     for (auto* rp = res; rp; rp = rp->ai_next) {
         fd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-        if (fd < 0) continue;
+        if (fd < 0)
+            continue;
         struct timeval tv;
         tv.tv_sec = 3;
         tv.tv_usec = 0;
         setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
         setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
-        if (connect(fd, rp->ai_addr, rp->ai_addrlen) == 0) break;
+        if (connect(fd, rp->ai_addr, rp->ai_addrlen) == 0)
+            break;
         close(fd);
         fd = -1;
     }
@@ -175,7 +182,8 @@ static int connectToHost(const std::string& url) {
 
 std::string OnvifPtz::httpPost(const std::string& soapXml) {
     int fd = connectToHost(ptzUrl_);
-    if (fd < 0) return {};
+    if (fd < 0)
+        return {};
 
     std::string host = ptzUrl_;
     std::string path = "/onvif/ptz_service";
@@ -205,55 +213,65 @@ std::string OnvifPtz::httpPost(const std::string& soapXml) {
     char buf[4096];
     while (true) {
         int n = read(fd, buf, sizeof(buf));
-        if (n <= 0) break;
+        if (n <= 0)
+            break;
         response.append(buf, n);
     }
     close(fd);
 
     auto bodyPos = response.find("\r\n\r\n");
-    if (bodyPos == std::string::npos) return {};
+    if (bodyPos == std::string::npos)
+        return {};
     return response.substr(bodyPos + 4);
 }
 
-bool OnvifPtz::continuousMove(const std::string& profileToken,
-                               float panSpeed, float tiltSpeed, float zoomSpeed) {
-    std::string soap = buildSoapEnvelope(
-        "xmlns:tptz=\"http://www.onvif.org/ver20/ptz/wsdl\" "
-        "xmlns:tt=\"http://www.onvif.org/ver10/schema\"",
-        "<tptz:ContinuousMove>"
-        "<tptz:ProfileToken>" + profileToken + "</tptz:ProfileToken>"
-        "<tptz:Velocity>"
-        "<tt:PanTilt x=\"" + std::to_string(panSpeed) +
-                  "\" y=\"" + std::to_string(tiltSpeed) + "\"/>"
-        "<tt:Zoom x=\"" + std::to_string(zoomSpeed) + "\"/>"
-        "</tptz:Velocity>"
-        "</tptz:ContinuousMove>");
+bool OnvifPtz::continuousMove(const std::string& profileToken, float panSpeed, float tiltSpeed,
+                              float zoomSpeed) {
+    std::string soap =
+        buildSoapEnvelope("xmlns:tptz=\"http://www.onvif.org/ver20/ptz/wsdl\" "
+                          "xmlns:tt=\"http://www.onvif.org/ver10/schema\"",
+                          "<tptz:ContinuousMove>"
+                          "<tptz:ProfileToken>" +
+                              profileToken +
+                              "</tptz:ProfileToken>"
+                              "<tptz:Velocity>"
+                              "<tt:PanTilt x=\"" +
+                              std::to_string(panSpeed) + "\" y=\"" + std::to_string(tiltSpeed) +
+                              "\"/>"
+                              "<tt:Zoom x=\"" +
+                              std::to_string(zoomSpeed) +
+                              "\"/>"
+                              "</tptz:Velocity>"
+                              "</tptz:ContinuousMove>");
 
     auto resp = httpPost(soap);
     return resp.find("Fault") == std::string::npos && !resp.empty();
 }
 
 bool OnvifPtz::stop(const std::string& profileToken) {
-    std::string soap = buildSoapEnvelope(
-        "xmlns:tptz=\"http://www.onvif.org/ver20/ptz/wsdl\"",
-        "<tptz:Stop>"
-        "<tptz:ProfileToken>" + profileToken + "</tptz:ProfileToken>"
-        "<tptz:PanTilt>true</tptz:PanTilt>"
-        "<tptz:Zoom>true</tptz:Zoom>"
-        "</tptz:Stop>");
+    std::string soap = buildSoapEnvelope("xmlns:tptz=\"http://www.onvif.org/ver20/ptz/wsdl\"",
+                                         "<tptz:Stop>"
+                                         "<tptz:ProfileToken>" +
+                                             profileToken +
+                                             "</tptz:ProfileToken>"
+                                             "<tptz:PanTilt>true</tptz:PanTilt>"
+                                             "<tptz:Zoom>true</tptz:Zoom>"
+                                             "</tptz:Stop>");
 
     auto resp = httpPost(soap);
     return resp.find("Fault") == std::string::npos && !resp.empty();
 }
 
-bool OnvifPtz::gotoPreset(const std::string& profileToken,
-                           const std::string& presetToken) {
-    std::string soap = buildSoapEnvelope(
-        "xmlns:tptz=\"http://www.onvif.org/ver20/ptz/wsdl\"",
-        "<tptz:GotoPreset>"
-        "<tptz:ProfileToken>" + profileToken + "</tptz:ProfileToken>"
-        "<tptz:PresetToken>" + presetToken + "</tptz:PresetToken>"
-        "</tptz:GotoPreset>");
+bool OnvifPtz::gotoPreset(const std::string& profileToken, const std::string& presetToken) {
+    std::string soap = buildSoapEnvelope("xmlns:tptz=\"http://www.onvif.org/ver20/ptz/wsdl\"",
+                                         "<tptz:GotoPreset>"
+                                         "<tptz:ProfileToken>" +
+                                             profileToken +
+                                             "</tptz:ProfileToken>"
+                                             "<tptz:PresetToken>" +
+                                             presetToken +
+                                             "</tptz:PresetToken>"
+                                             "</tptz:GotoPreset>");
 
     auto resp = httpPost(soap);
     return resp.find("Fault") == std::string::npos && !resp.empty();
@@ -261,14 +279,16 @@ bool OnvifPtz::gotoPreset(const std::string& profileToken,
 
 std::vector<PtzPreset> OnvifPtz::getPresets(const std::string& profileToken) {
     std::vector<PtzPreset> presets;
-    std::string soap = buildSoapEnvelope(
-        "xmlns:tptz=\"http://www.onvif.org/ver20/ptz/wsdl\"",
-        "<tptz:GetPresets>"
-        "<tptz:ProfileToken>" + profileToken + "</tptz:ProfileToken>"
-        "</tptz:GetPresets>");
+    std::string soap = buildSoapEnvelope("xmlns:tptz=\"http://www.onvif.org/ver20/ptz/wsdl\"",
+                                         "<tptz:GetPresets>"
+                                         "<tptz:ProfileToken>" +
+                                             profileToken +
+                                             "</tptz:ProfileToken>"
+                                             "</tptz:GetPresets>");
 
     auto resp = httpPost(soap);
-    if (resp.empty()) return presets;
+    if (resp.empty())
+        return presets;
 
     auto doc = xml::parse(resp);
     auto presetNodes = xml::findNodes(doc, "Preset");

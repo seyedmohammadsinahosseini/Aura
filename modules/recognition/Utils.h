@@ -14,13 +14,12 @@ inline void ensureDirectoryExists(const std::string& dirPath) {
     std::error_code errorCode;
     std::filesystem::create_directories(dirPath, errorCode);
     if (errorCode) {
-        throw std::runtime_error("failed to create directory: " + dirPath + " - " + errorCode.message());
+        throw std::runtime_error("failed to create directory: " + dirPath + " - " +
+                                 errorCode.message());
     }
 }
 
-inline std::string buildCropPath(const std::string& dirPath,
-                                 int64_t timestamp,
-                                 int64_t personId,
+inline std::string buildCropPath(const std::string& dirPath, int64_t timestamp, int64_t personId,
                                  const std::string& trackId) {
     const std::string personToken = personId >= 0 ? std::to_string(personId) : "unknown";
     return dirPath + "/" + std::to_string(timestamp) + "_" + personToken + "_" + trackId + ".jpg";
@@ -41,6 +40,6 @@ inline bool saveCroppedFace(const cv::Mat& frame, const cv::Rect& bbox, const st
     return cv::imwrite(path, cropped);
 }
 
-}  // namespace face
+} // namespace face
 
-#endif  // FACE_CPP_RECOGNITION_UTILS_H
+#endif // FACE_CPP_RECOGNITION_UTILS_H

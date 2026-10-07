@@ -8,13 +8,7 @@
 
 namespace backend {
 
-enum class ModuleState {
-    Unloaded,
-    Initialized,
-    Running,
-    Paused,
-    Stopped
-};
+enum class ModuleState { Unloaded, Initialized, Running, Paused, Stopped };
 
 struct ModuleConfig {
     bool enabled{true};
@@ -33,14 +27,10 @@ public:
     virtual void stop() = 0;
     virtual bool updateConfig(const ModuleConfig& config) = 0;
 
-    ModuleState state() const {
-        return state_.load();
-    }
+    ModuleState state() const { return state_.load(); }
 
 protected:
-    void setState(ModuleState state) {
-        state_.store(state);
-    }
+    void setState(ModuleState state) { state_.store(state); }
 
     std::atomic<ModuleState> state_{ModuleState::Unloaded};
 };

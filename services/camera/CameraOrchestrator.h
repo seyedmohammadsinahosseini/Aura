@@ -16,14 +16,15 @@
 #include <atomic>
 #include <mutex>
 
-namespace face { class AttendanceManager; }
+namespace face {
+class AttendanceManager;
+}
 
 namespace backend {
 
 class CameraOrchestrator {
 public:
-    explicit CameraOrchestrator(std::shared_ptr<face::FaceConfig> config,
-                                face::FaceDatabase* db,
+    explicit CameraOrchestrator(std::shared_ptr<face::FaceConfig> config, face::FaceDatabase* db,
                                 CameraPreviewHub* previewHub = nullptr,
                                 face::AttendanceManager* attendanceMgr = nullptr);
     ~CameraOrchestrator();
@@ -60,17 +61,19 @@ private:
     bool shouldRunCamera(const face::CameraConfig& camConfig) const;
     void startWorker(const std::string& cameraUid, const face::CameraConfig& camConfig);
     void applyPipelineConfig(const std::string& cameraUid, face::FacePipeline* pipeline);
-    void drawProcessedFrame(const std::string& cameraUid, cv::Mat& frame, const std::vector<face::SFace>& detections);
-    void persistDetections(const std::string& cameraUid, const std::vector<face::SFace>& detections, const cv::Mat& frame);
+    void drawProcessedFrame(const std::string& cameraUid, cv::Mat& frame,
+                            const std::vector<face::SFace>& detections);
+    void persistDetections(const std::string& cameraUid, const std::vector<face::SFace>& detections,
+                           const cv::Mat& frame);
     void stopWorker(const std::string& cameraUid);
     void workerLoop(const std::string& cameraUid, CameraWorker* worker);
-    void processFrame(const std::string& cameraUid, cv::Mat frame,
-                      face::FacePipeline* pipeline, face::MotionAnalyzer& motionAnalyzer,
-                      float fps = 0.0f);
+    void processFrame(const std::string& cameraUid, cv::Mat frame, face::FacePipeline* pipeline,
+                      face::MotionAnalyzer& motionAnalyzer, float fps = 0.0f);
 
     std::unique_ptr<face::FaceSearcher> faceSearcher_;
 
-    std::unordered_map<std::string, std::unordered_map<std::string, std::string>> cameraModuleConfigs_;
+    std::unordered_map<std::string, std::unordered_map<std::string, std::string>>
+        cameraModuleConfigs_;
     std::mutex configMutex_;
     std::unordered_map<std::string, float> best_blur_score_per_track_;
 };

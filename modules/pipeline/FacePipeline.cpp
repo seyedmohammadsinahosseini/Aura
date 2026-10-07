@@ -5,12 +5,8 @@
 namespace face {
 
 FacePipeline::FacePipeline(const std::shared_ptr<FaceConfig>& config)
-    : config_(config),
-      face_process_(config_, engines_),
-      head_detector_(config_, engines_),
-      tracker_(*config_),
-    motion_detector_(*config_),
-    motion_short_circuit_enabled_(false) {
+    : config_(config), face_process_(config_, engines_), head_detector_(config_, engines_),
+      tracker_(*config_), motion_detector_(*config_), motion_short_circuit_enabled_(false) {
     far_analyzer_.mFarHeight = config_->FarHeightThreshold();
     far_analyzer_.mFarWidth = config_->FarWidthThreshold();
     head_face_iou_threshold_ = config_->HeadFaceIouThreshold();
@@ -44,23 +40,21 @@ FacePipeline::ProcessFrameResult FacePipeline::ProcessFrame(cv::Mat& frame) {
         return {};
     }
 
-        if (motion_short_circuit_enabled_) {
-            if (!motion_detector_.PrepareMotionResult(frame)) {
-                ProcessFrameResult empty;
-                empty.detections = {};
-                empty.removedTrackIds = {};
-                return empty;
-            }
+    if (motion_short_circuit_enabled_) {
+        if (!motion_detector_.PrepareMotionResult(frame)) {
+            ProcessFrameResult empty;
+            empty.detections = {};
+            empty.removedTrackIds = {};
+            return empty;
         }
+    }
 
     auto detections = face_process_.GetBoxes(frame);
     auto headDetections = DetectHeads(frame);
 
     for (const auto& head : headDetections) {
-        cv::Rect headBox(static_cast<int>(head.x1),
-                         static_cast<int>(head.y1),
-                         static_cast<int>(head.width),
-                         static_cast<int>(head.height));
+        cv::Rect headBox(static_cast<int>(head.x1), static_cast<int>(head.y1),
+                         static_cast<int>(head.width), static_cast<int>(head.height));
         bool overlap = false;
         for (const auto& faceDet : detections) {
             if (IoU(faceDet.mBbox, headBox) > head_face_iou_threshold_) {
@@ -108,8 +102,8 @@ FacePipeline::ProcessFrameResult FacePipeline::ProcessFrame(cv::Mat& frame) {
                 detection.mEmbedding = it->second;
                 detection.mHasEmbedding = true;
             }
-            alreadyRecognized =
-                embedding_extracted_track_ids_.contains(detection.mTrackID) && embedding_extracted_track_ids_[detection.mTrackID];
+            alreadyRecognized = embedding_extracted_track_ids_.contains(detection.mTrackID) &&
+                embedding_extracted_track_ids_[detection.mTrackID];
         }
 
         detection.mBlurScore = -1.0F;
@@ -121,9 +115,12 @@ FacePipeline::ProcessFrameResult FacePipeline::ProcessFrame(cv::Mat& frame) {
 
         bool passesGate = true;
         if (quality_gate_enabled_) {
-            if (use_side_profile_gate_ && detection.mSideProfileView) passesGate = false;
-            if (use_far_distance_gate_ && detection.mFarDistance)     passesGate = false;
-            if (use_blur_gate_ && detection.mBlurry)                  passesGate = false;
+            if (use_side_profile_gate_ && detection.mSideProfileView)
+                passesGate = false;
+            if (use_far_distance_gate_ && detection.mFarDistance)
+                passesGate = false;
+            if (use_blur_gate_ && detection.mBlurry)
+                passesGate = false;
         }
 
         if (recognition_enabled_.load() && !alreadyRecognized && passesGate) {
@@ -163,9 +160,8 @@ void FacePipeline::EmbeddingWorker() {
         SEmbeddingTask task;
         {
             std::unique_lock<std::mutex> lock(queue_mutex_);
-            queue_cv_.wait(lock, [this]() {
-                return stop_embedding_thread_ || !embedding_queue_.empty();
-            });
+            queue_cv_.wait(
+                lock, [this]() { return stop_embedding_thread_ || !embedding_queue_.empty(); });
             if (stop_embedding_thread_ && embedding_queue_.empty()) {
                 return;
             }
@@ -210,15 +206,28 @@ void FacePipeline::setMotionShortCircuitEnabled(bool enabled) {
     motion_short_circuit_enabled_ = enabled;
 }
 
-void FacePipeline::updateMotionParameters(int motionThreshold, int motionBuffer, int motionDiffThreshold, int blurKernel, int dilateKernel) {
-    motion_detector_.updateConfig(motionThreshold, motionBuffer, motionDiffThreshold, blurKernel, dilateKernel);
+void FacePipeline::updateMotionParameters(int motionThreshold, int motionBuffer,
+                                          int motionDiffThreshold, int blurKernel,
+                                          int dilateKernel) {
+    motion_detector_.updateConfig(motionThreshold, motionBuffer, motionDiffThreshold, blurKernel,
+                                  dilateKernel);
 }
 
-void FacePipeline::setQualityGateEnabled(bool enabled) { quality_gate_enabled_ = enabled; }
-void FacePipeline::setUseBlurGate(bool enabled) { use_blur_gate_ = enabled; }
-void FacePipeline::setBlurThreshold(float threshold) { blur_threshold_ = threshold; }
-void FacePipeline::setUseSideProfileGate(bool enabled) { use_side_profile_gate_ = enabled; }
-void FacePipeline::setUseFarDistanceGate(bool enabled) { use_far_distance_gate_ = enabled; }
+void FacePipeline::setQualityGateEnabled(bool enabled) {
+    quality_gate_enabled_ = enabled;
+}
+void FacePipeline::setUseBlurGate(bool enabled) {
+    use_blur_gate_ = enabled;
+}
+void FacePipeline::setBlurThreshold(float threshold) {
+    blur_threshold_ = threshold;
+}
+void FacePipeline::setUseSideProfileGate(bool enabled) {
+    use_side_profile_gate_ = enabled;
+}
+void FacePipeline::setUseFarDistanceGate(bool enabled) {
+    use_far_distance_gate_ = enabled;
+}
 void FacePipeline::setFarThresholds(float heightThreshold, float widthThreshold) {
     far_analyzer_.mFarHeight = heightThreshold;
     far_analyzer_.mFarWidth = widthThreshold;
@@ -269,7 +278,8 @@ void FacePipeline::clearAllRecognitionCache() {
 
 float FacePipeline::ComputeBlurScore(const cv::Mat& frame, const cv::Rect& bbox) {
     cv::Rect safe = bbox & cv::Rect(0, 0, frame.cols, frame.rows);
-    if (safe.area() <= 0) return 0.0F;
+    if (safe.area() <= 0)
+        return 0.0F;
     cv::Mat roi = frame(safe);
     cv::Mat gray, laplacian;
     if (roi.channels() == 3)
@@ -294,4 +304,4 @@ float FacePipeline::IoU(const cv::Rect& a, const cv::Rect& b) {
     return static_cast<float>(inter.area()) / unionArea;
 }
 
-}  // namespace face
+} // namespace face

@@ -5,13 +5,15 @@
 namespace backend {
 
 void CameraPreviewHub::subscribe(const std::string& cameraUid) {
-    if (cameraUid.empty()) return;
+    if (cameraUid.empty())
+        return;
     std::lock_guard<std::mutex> lock(mutex_);
     ++subscriberCounts_[cameraUid];
 }
 
 void CameraPreviewHub::unsubscribe(const std::string& cameraUid) {
-    if (cameraUid.empty()) return;
+    if (cameraUid.empty())
+        return;
     std::lock_guard<std::mutex> lock(mutex_);
     const auto it = subscriberCounts_.find(cameraUid);
     if (it == subscriberCounts_.end()) {
@@ -41,7 +43,8 @@ int CameraPreviewHub::subscriberCount(const std::string& cameraUid) const {
 }
 
 void CameraPreviewHub::publishFrame(const std::string& cameraUid, const cv::Mat& frame, float fps) {
-    if (cameraUid.empty() || frame.empty()) return;
+    if (cameraUid.empty() || frame.empty())
+        return;
 
     std::lock_guard<std::mutex> lock(mutex_);
     if (!subscriberCounts_.contains(cameraUid)) {
@@ -71,7 +74,8 @@ void CameraPreviewHub::removeCamera(const std::string& cameraUid) {
     subscriberCounts_.erase(cameraUid);
 }
 
-std::optional<CameraPreviewHub::EncodedJpegFrame> CameraPreviewHub::getLatestJpeg(const std::string& cameraUid) const {
+std::optional<CameraPreviewHub::EncodedJpegFrame>
+CameraPreviewHub::getLatestJpeg(const std::string& cameraUid) const {
     std::lock_guard<std::mutex> lock(mutex_);
     const auto it = latestFrames_.find(cameraUid);
     if (it == latestFrames_.end() || it->second.jpegBytes.empty()) {
@@ -87,7 +91,8 @@ std::optional<CameraPreviewHub::EncodedJpegFrame> CameraPreviewHub::getLatestJpe
     return encoded;
 }
 
-std::optional<CameraPreviewHub::RawBgrFrame> CameraPreviewHub::getLatestBgr(const std::string& cameraUid) const {
+std::optional<CameraPreviewHub::RawBgrFrame>
+CameraPreviewHub::getLatestBgr(const std::string& cameraUid) const {
     std::lock_guard<std::mutex> lock(mutex_);
     const auto it = latestFrames_.find(cameraUid);
     if (it == latestFrames_.end() || it->second.bgrBytes.empty()) {
@@ -104,4 +109,4 @@ std::optional<CameraPreviewHub::RawBgrFrame> CameraPreviewHub::getLatestBgr(cons
     return raw;
 }
 
-}  // namespace backend
+} // namespace backend

@@ -8,11 +8,7 @@
 
 namespace camera {
 
-enum class ConnectionType {
-    LOCAL,
-    RTSP,
-    ONVIF
-};
+enum class ConnectionType { LOCAL, RTSP, ONVIF };
 
 struct MediaProfileInfo {
     std::string token;
@@ -62,11 +58,9 @@ public:
     static std::string tryRtspDescribe(const std::string& url, int timeoutMs);
 
 private:
-    static std::vector<DeviceInfo> probeOnvifEndpoints(
-        const std::vector<std::string>& ips,
-        int port,
-        int timeoutMs,
-        int maxThreads = 30);
+    static std::vector<DeviceInfo> probeOnvifEndpoints(const std::vector<std::string>& ips,
+                                                       int port, int timeoutMs,
+                                                       int maxThreads = 30);
     static bool isOnvifEndpoint(const std::string& ip, int port, int timeoutMs);
     static bool populateOnvifMetadata(DeviceInfo& info);
     static std::vector<std::string> probeRtspPaths(const std::string& ip, int timeoutMs);

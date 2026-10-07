@@ -4,17 +4,15 @@
 
 namespace face {
 
-MotionAnalyzer::MotionAnalyzer(const MotionConfig& config) : config_(config) {
-}
+MotionAnalyzer::MotionAnalyzer(const MotionConfig& config) : config_(config) {}
 
 void MotionAnalyzer::update(const std::string& trackId, const cv::Rect& bbox) {
     if (trackId.empty()) {
         return;
     }
 
-    const cv::Point2f center(
-        static_cast<float>(bbox.x) + static_cast<float>(bbox.width) * 0.5F,
-        static_cast<float>(bbox.y) + static_cast<float>(bbox.height) * 0.5F);
+    const cv::Point2f center(static_cast<float>(bbox.x) + static_cast<float>(bbox.width) * 0.5F,
+                             static_cast<float>(bbox.y) + static_cast<float>(bbox.height) * 0.5F);
 
     std::lock_guard<std::mutex> lock(mutex_);
     auto& window = history_[trackId];
@@ -65,4 +63,4 @@ void MotionAnalyzer::updateConfig(const MotionConfig& config) {
     }
 }
 
-}  // namespace face
+} // namespace face

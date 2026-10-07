@@ -33,7 +33,8 @@ public:
     void setRecognitionEnabled(bool enabled);
     void setLivenessEnabled(bool enabled);
     void setMotionShortCircuitEnabled(bool enabled);
-    void updateMotionParameters(int motionThreshold, int motionBuffer, int motionDiffThreshold, int blurKernel, int dilateKernel);
+    void updateMotionParameters(int motionThreshold, int motionBuffer, int motionDiffThreshold,
+                                int blurKernel, int dilateKernel);
     void setQualityGateEnabled(bool enabled);
     void setUseBlurGate(bool enabled);
     void setBlurThreshold(float threshold);
@@ -93,6 +94,6 @@ private:
     static float IoU(const cv::Rect& a, const cv::Rect& b);
 };
 
-}  // namespace face
+} // namespace face
 
-#endif  // FACE_CPP_PIPELINE_FACEPIPELINE_H
+#endif // FACE_CPP_PIPELINE_FACEPIPELINE_H

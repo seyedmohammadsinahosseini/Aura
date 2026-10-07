@@ -41,8 +41,7 @@ struct FullDeviceInfo {
 
 class OnvifClient {
 public:
-    OnvifClient(const std::string& host, int port = 80,
-                const std::string& username = "",
+    OnvifClient(const std::string& host, int port = 80, const std::string& username = "",
                 const std::string& password = "");
 
     DeviceInfo getDeviceInformation();
@@ -50,16 +49,15 @@ public:
     std::vector<MediaProfile> getProfiles(const std::string& mediaUrl);
     std::string getStreamUri(const std::string& mediaUrl, const std::string& profileToken);
     std::string getStreamUri(const std::string& mediaUrl, const std::string& profileToken,
-                              const std::string& transportProtocol);
+                             const std::string& transportProtocol);
 
     // Snapshot (JPEG) URI from media service
     std::string getSnapshotUri(const std::string& mediaUrl, const std::string& profileToken);
 
     // Change encoding parameters on the camera itself
-    bool setVideoEncoderConfiguration(const std::string& mediaUrl,
-                                       const std::string& configToken,
-                                       int width, int height, int fps,
-                                       const std::string& encoding = "H264");
+    bool setVideoEncoderConfiguration(const std::string& mediaUrl, const std::string& configToken,
+                                      int width, int height, int fps,
+                                      const std::string& encoding = "H264");
 
     // Full chain: GetCapabilities → GetProfiles → GetStreamUri (all profiles)
     std::vector<MediaProfile> getProfilesWithStreams(const std::string& mediaUrl);

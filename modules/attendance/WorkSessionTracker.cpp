@@ -15,12 +15,11 @@ std::string dateFromTimestamp(const int64_t timestamp) {
     return buffer;
 }
 
-}  // namespace
+} // namespace
 
 namespace face {
 
-WorkSessionTracker::WorkSessionTracker(FaceDatabase& db) : db_(db) {
-}
+WorkSessionTracker::WorkSessionTracker(FaceDatabase& db) : db_(db) {}
 
 void WorkSessionTracker::onPersonArrived(int64_t personId, int64_t timestamp) {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -62,9 +61,10 @@ DailySummary WorkSessionTracker::getDailySummary(int64_t personId, const std::st
     return db_.getDailySummary(personId, date);
 }
 
-std::vector<BreakRecord> WorkSessionTracker::getTimeline(int64_t personId, const std::string& date) {
+std::vector<BreakRecord> WorkSessionTracker::getTimeline(int64_t personId,
+                                                         const std::string& date) {
     std::lock_guard<std::mutex> lock(mutex_);
     return db_.getTimeline(personId, date);
 }
 
-}  // namespace face
+} // namespace face

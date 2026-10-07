@@ -32,14 +32,8 @@ static std::string generateUuidV4() {
     auto r4 = dist(gen);
 
     char buf[37];
-    snprintf(buf, sizeof(buf),
-             "%08x-%04x-4%03x-%04x-%08x%04x",
-             r1,
-             (r2 >> 16) & 0xFFFF,
-             r2 & 0x0FFF,
-             (0x8000 | (r3 & 0x3FFF)),
-             r3 >> 16,
-             r4 & 0xFFFF);
+    snprintf(buf, sizeof(buf), "%08x-%04x-4%03x-%04x-%08x%04x", r1, (r2 >> 16) & 0xFFFF,
+             r2 & 0x0FFF, (0x8000 | (r3 & 0x3FFF)), r3 >> 16, r4 & 0xFFFF);
     return "uuid:" + std::string(buf);
 }
 
@@ -52,12 +46,16 @@ static std::vector<InterfaceInfo> getActiveInterfaces() {
     std::vector<InterfaceInfo> interfaces;
 
     struct ifaddrs* ifaddr = nullptr;
-    if (getifaddrs(&ifaddr) < 0) return interfaces;
+    if (getifaddrs(&ifaddr) < 0)
+        return interfaces;
 
     for (struct ifaddrs* ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next) {
-        if (!ifa->ifa_addr || ifa->ifa_addr->sa_family != AF_INET) continue;
-        if (!(ifa->ifa_flags & IFF_UP) || !(ifa->ifa_flags & IFF_RUNNING)) continue;
-        if (ifa->ifa_flags & IFF_LOOPBACK) continue;
+        if (!ifa->ifa_addr || ifa->ifa_addr->sa_family != AF_INET)
+            continue;
+        if (!(ifa->ifa_flags & IFF_UP) || !(ifa->ifa_flags & IFF_RUNNING))
+            continue;
+        if (ifa->ifa_flags & IFF_LOOPBACK)
+            continue;
 
         InterfaceInfo info;
         info.name = ifa->ifa_name;
@@ -71,7 +69,8 @@ static std::vector<InterfaceInfo> getActiveInterfaces() {
 
 static int createBoundSocket(in_addr interfaceAddr) {
     int sock = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, 0);
-    if (sock < 0) return -1;
+    if (sock < 0)
+        return -1;
 
     int reuse = 1;
     setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
@@ -88,8 +87,7 @@ static int createBoundSocket(in_addr interfaceAddr) {
         return -1;
     }
 
-    if (setsockopt(sock, IPPROTO_IP, IP_MULTICAST_IF,
-                   &interfaceAddr, sizeof(interfaceAddr)) < 0) {
+    if (setsockopt(sock, IPPROTO_IP, IP_MULTICAST_IF, &interfaceAddr, sizeof(interfaceAddr)) < 0) {
         close(sock);
         return -1;
     }
@@ -133,14 +131,15 @@ std::vector<DiscoveredDevice> OnvifDiscovery::probe(int timeoutMs) {
     // ---- Step 3: build the Probe XML once ----
     std::string messageId = generateUuidV4();
 
-    std::string probeMsg =
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-        "<e:Envelope xmlns:e=\"http://www.w3.org/2003/05/soap-envelope\" "
-        "xmlns:w=\"http://schemas.xmlsoap.org/ws/2004/08/addressing\" "
-        "xmlns:d=\"http://schemas.xmlsoap.org/ws/2005/04/discovery\" "
-        "xmlns:dn=\"http://www.onvif.org/ver10/network/wsdl\">"
-        "<e:Header>"
-        "<w:MessageID>" + messageId + "</w:MessageID>"
+    std::string probeMsg = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                           "<e:Envelope xmlns:e=\"http://www.w3.org/2003/05/soap-envelope\" "
+                           "xmlns:w=\"http://schemas.xmlsoap.org/ws/2004/08/addressing\" "
+                           "xmlns:d=\"http://schemas.xmlsoap.org/ws/2005/04/discovery\" "
+                           "xmlns:dn=\"http://www.onvif.org/ver10/network/wsdl\">"
+                           "<e:Header>"
+                           "<w:MessageID>" +
+        messageId +
+        "</w:MessageID>"
         "<w:To e:mustUnderstand=\"true\">urn:schemas-xmlsoap-org:ws:2005:04:discovery</w:To>"
         "<w:Action e:mustUnderstand=\"true\">http://schemas.xmlsoap.org/ws/2005/04/discovery/Probe</w:Action>"
         "</e:Header>"
@@ -159,8 +158,8 @@ std::vector<DiscoveredDevice> OnvifDiscovery::probe(int timeoutMs) {
 
     for (const auto& entry : sockets) {
         for (int i = 0; i < 3; ++i) {
-            sendto(entry.fd, probeMsg.data(), probeMsg.size(), 0,
-                   (struct sockaddr*)&mcast, sizeof(mcast));
+            sendto(entry.fd, probeMsg.data(), probeMsg.size(), 0, (struct sockaddr*)&mcast,
+                   sizeof(mcast));
         }
     }
 
@@ -174,36 +173,43 @@ std::vector<DiscoveredDevice> OnvifDiscovery::probe(int timeoutMs) {
         int maxFd = 0;
         for (const auto& entry : sockets) {
             FD_SET(entry.fd, &readSet);
-            if (entry.fd > maxFd) maxFd = entry.fd;
+            if (entry.fd > maxFd)
+                maxFd = entry.fd;
         }
 
         auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(
                              deadline - std::chrono::steady_clock::now())
                              .count();
-        if (remaining <= 0) break;
+        if (remaining <= 0)
+            break;
 
         struct timeval tv{};
         tv.tv_sec = remaining / 1000;
         tv.tv_usec = (remaining % 1000) * 1000;
 
         int ret = select(maxFd + 1, &readSet, nullptr, nullptr, &tv);
-        if (ret <= 0) continue;
+        if (ret <= 0)
+            continue;
 
         for (const auto& entry : sockets) {
-            if (!FD_ISSET(entry.fd, &readSet)) continue;
+            if (!FD_ISSET(entry.fd, &readSet))
+                continue;
 
             struct sockaddr_in from{};
             socklen_t addrLen = sizeof(from);
-            int n = recvfrom(entry.fd, buffer, sizeof(buffer) - 1, 0,
-                            (struct sockaddr*)&from, &addrLen);
-            if (n <= 0) continue;
+            int n = recvfrom(entry.fd, buffer, sizeof(buffer) - 1, 0, (struct sockaddr*)&from,
+                             &addrLen);
+            if (n <= 0)
+                continue;
             buffer[n] = '\0';
 
             std::string ip = inet_ntoa(from.sin_addr);
-            if (!seenIps.insert(ip).second) continue;
+            if (!seenIps.insert(ip).second)
+                continue;
 
             std::string resp(buffer, n);
-            if (resp.find("ProbeMatches") == std::string::npos) continue;
+            if (resp.find("ProbeMatches") == std::string::npos)
+                continue;
 
             DiscoveredDevice device;
             device.ip = ip;
@@ -226,9 +232,13 @@ std::vector<DiscoveredDevice> OnvifDiscovery::probe(int timeoutMs) {
                     size_t portStart = device.xaddrs.find("://") + 3;
                     size_t colon = device.xaddrs.find(':', portStart);
                     size_t slash = device.xaddrs.find('/', portStart);
-                    if (colon != std::string::npos && (slash == std::string::npos || colon < slash)) {
-                        try { device.port = std::stoi(device.xaddrs.substr(colon + 1, slash - colon - 1)); }
-                        catch (...) {}
+                    if (colon != std::string::npos &&
+                        (slash == std::string::npos || colon < slash)) {
+                        try {
+                            device.port =
+                                std::stoi(device.xaddrs.substr(colon + 1, slash - colon - 1));
+                        } catch (...) {
+                        }
                     }
                 }
             }
@@ -238,7 +248,8 @@ std::vector<DiscoveredDevice> OnvifDiscovery::probe(int timeoutMs) {
                 std::istringstream ss(scopesList[0]);
                 std::string s;
                 while (ss >> s) {
-                    if (!s.empty()) device.scopes.push_back(s);
+                    if (!s.empty())
+                        device.scopes.push_back(s);
                     auto hw = s.find("/hardware/");
                     if (hw != std::string::npos && hw + 10 < s.size())
                         device.name = s.substr(hw + 10);

@@ -7,18 +7,21 @@
 
 namespace face {
 
-FaceSearcher::FaceSearcher(int dimension) : dimension_(dimension), index_(std::make_unique<faiss::IndexFlatIP>(dimension)) {
-}
+FaceSearcher::FaceSearcher(int dimension)
+    : dimension_(dimension), index_(std::make_unique<faiss::IndexFlatIP>(dimension)) {}
 
 FaceSearcher::~FaceSearcher() = default;
 
 static std::vector<float> normalize(const std::vector<float>& v) {
     float norm = 0.0f;
-    for (float x : v) norm += x * x;
+    for (float x : v)
+        norm += x * x;
     norm = std::sqrt(norm);
-    if (norm < 1e-6f) return v;
+    if (norm < 1e-6f)
+        return v;
     std::vector<float> out(v.size());
-    for (size_t i = 0; i < v.size(); ++i) out[i] = v[i] / norm;
+    for (size_t i = 0; i < v.size(); ++i)
+        out[i] = v[i] / norm;
     return out;
 }
 
@@ -83,4 +86,4 @@ size_t FaceSearcher::size() const {
     return indexToPersonId_.size();
 }
 
-}  // namespace face
+} // namespace face

@@ -8,29 +8,28 @@
 #include <opencv2/opencv.hpp>
 
 namespace face {
-    constexpr uint32_t DIM = 512;
-    using FeatureArray = std::array<float, DIM>;
+constexpr uint32_t DIM = 512;
+using FeatureArray = std::array<float, DIM>;
 
-    struct SFace {
-        std::string mTrackID{};
-        int64_t mPersonId{-1};
-        std::string mDisplayName{};
-        float mRecognitionConfidence{0.0F};
+struct SFace {
+    std::string mTrackID{};
+    int64_t mPersonId{-1};
+    std::string mDisplayName{};
+    float mRecognitionConfidence{0.0F};
 
-        float mConfidence{};
-        cv::Rect mBbox{};
-        bool face=true;
-        std::vector<cv::Point> mKeypoint{};
-        FeatureArray mEmbedding{};
-        bool mHasEmbedding{false};
+    float mConfidence{};
+    cv::Rect mBbox{};
+    bool face = true;
+    std::vector<cv::Point> mKeypoint{};
+    FeatureArray mEmbedding{};
+    bool mHasEmbedding{false};
 
-        cv::Mat mFaceImage{};
+    cv::Mat mFaceImage{};
 
-        bool mSideProfileView{};
-        bool mFarDistance{};
-        bool mBlurry{};
-        float mBlurScore{0.0F};
-
-    };
-}
+    bool mSideProfileView{};
+    bool mFarDistance{};
+    bool mBlurry{};
+    float mBlurScore{0.0F};
+};
+} // namespace face
 #endif //FACE_CPP_SFACE_H

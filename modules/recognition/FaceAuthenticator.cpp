@@ -37,27 +37,32 @@ std::string jsonValueToString(const nlohmann::json& value) {
     return value.dump();
 }
 
-}  // namespace
+} // namespace
 
 namespace face {
 
 // اضافه کردن یک ماکرو ساده برای لاگ دیباگ (می‌توانید از logger واقعی استفاده کنید)
-#define DEBUG_LOG(msg) do { std::cerr << "[DEBUG] " << msg << std::endl; } while(0)
-#define DEBUG_LOG_VAL(msg, val) do { std::cerr << "[DEBUG] " << msg << ": " << val << std::endl; } while(0)
+#define DEBUG_LOG(msg)                                                                             \
+    do {                                                                                           \
+        std::cerr << "[DEBUG] " << msg << std::endl;                                               \
+    } while (0)
+#define DEBUG_LOG_VAL(msg, val)                                                                    \
+    do {                                                                                           \
+        std::cerr << "[DEBUG] " << msg << ": " << val << std::endl;                                \
+    } while (0)
 
 FaceAuthenticator::FaceAuthenticator(const std::shared_ptr<FaceConfig>& config)
-    : config_(config),
-      db_(std::make_unique<FaceDatabase>(config_->Database().path)),
+    : config_(config), db_(std::make_unique<FaceDatabase>(config_->Database().path)),
       searcher_(std::make_unique<FaceSearcher>(static_cast<int>(DIM))),
       workSessionTracker_(std::make_unique<WorkSessionTracker>(*db_)),
-      attendanceMgr_(std::make_unique<AttendanceManager>(*db_, *workSessionTracker_, config_->Attendance())),
+      attendanceMgr_(
+          std::make_unique<AttendanceManager>(*db_, *workSessionTracker_, config_->Attendance())),
       motionAnalyzer_(std::make_unique<MotionAnalyzer>(
-          MotionConfig{config_->Recognition().motionWindowSize, config_->Recognition().motionThresholdPx, false})),
+          MotionConfig{config_->Recognition().motionWindowSize,
+                       config_->Recognition().motionThresholdPx, false})),
       locationTracker_(std::make_unique<LocationTracker>(*db_)),
-      licenseManager_(config_->LicensePath()),
-      recognitionConfig_(config_->Recognition()),
-      attendanceConfig_(config_->Attendance()),
-      threshold_(config_->Recognition().faissThreshold) {
+      licenseManager_(config_->LicensePath()), recognitionConfig_(config_->Recognition()),
+      attendanceConfig_(config_->Attendance()), threshold_(config_->Recognition().faissThreshold) {
     DEBUG_LOG("FaceAuthenticator constructed");
     reloadIndex();
     reloadRuntimeSettings();
@@ -84,11 +89,8 @@ std::vector<SFace> FaceAuthenticator::processFrame(const std::string& cameraUid,
             continue;
         }
         DEBUG_LOG_VAL("Processing detection with trackId", detection.mTrackID);
-        processDetection(detection,
-                         buildScopedTrackId(cameraUid, detection.mTrackID),
-                         cameraUid,
-                         timestamp,
-                         frame);
+        processDetection(detection, buildScopedTrackId(cameraUid, detection.mTrackID), cameraUid,
+                         timestamp, frame);
     }
 
     for (const auto& trackId : result.removedTrackIds) {
@@ -99,7 +101,8 @@ std::vector<SFace> FaceAuthenticator::processFrame(const std::string& cameraUid,
     return result.detections;
 }
 
-void FaceAuthenticator::drawFrame(const std::string& cameraUid, cv::Mat& frame, const std::vector<SFace>& detections) {
+void FaceAuthenticator::drawFrame(const std::string& cameraUid, cv::Mat& frame,
+                                  const std::vector<SFace>& detections) {
     auto& runtime = getOrCreateRuntime(cameraUid);
     bool detectionModuleRunning = isModuleRunning(runtime.registry, kModuleDetection);
     bool recognitionModuleRunning = isModuleRunning(runtime.registry, kModuleRecognition);
@@ -128,9 +131,12 @@ void FaceAuthenticator::reloadRuntimeSettings() {
     recognitionConfig_ = config_->Recognition();
     attendanceConfig_ = config_->Attendance();
 
-    applyOptionalNumber(db_->getSetting("recognition.faiss_threshold"), recognitionConfig_.faissThreshold);
-    applyOptionalNumber(db_->getSetting("recognition.motion_window_size"), recognitionConfig_.motionWindowSize);
-    applyOptionalNumber(db_->getSetting("recognition.motion_threshold_px"), recognitionConfig_.motionThresholdPx);
+    applyOptionalNumber(db_->getSetting("recognition.faiss_threshold"),
+                        recognitionConfig_.faissThreshold);
+    applyOptionalNumber(db_->getSetting("recognition.motion_window_size"),
+                        recognitionConfig_.motionWindowSize);
+    applyOptionalNumber(db_->getSetting("recognition.motion_threshold_px"),
+                        recognitionConfig_.motionThresholdPx);
 
     if (const auto value = db_->getSetting("attendance.default_arrival"); value.has_value()) {
         attendanceConfig_.defaultArrival = *value;
@@ -138,12 +144,13 @@ void FaceAuthenticator::reloadRuntimeSettings() {
     if (const auto value = db_->getSetting("attendance.default_departure"); value.has_value()) {
         attendanceConfig_.defaultDeparture = *value;
     }
-    applyOptionalNumber(db_->getSetting("attendance.late_grace_minutes"), attendanceConfig_.lateGraceMinutes);
+    applyOptionalNumber(db_->getSetting("attendance.late_grace_minutes"),
+                        attendanceConfig_.lateGraceMinutes);
 
     threshold_ = recognitionConfig_.faissThreshold;
     DEBUG_LOG_VAL("FAISS threshold set to", threshold_);
-    motionAnalyzer_->updateConfig(
-        MotionConfig{recognitionConfig_.motionWindowSize, recognitionConfig_.motionThresholdPx, false});
+    motionAnalyzer_->updateConfig(MotionConfig{recognitionConfig_.motionWindowSize,
+                                               recognitionConfig_.motionThresholdPx, false});
     attendanceMgr_->updateDefaults(attendanceConfig_);
 
     for (auto& [cameraUid, runtime] : runtimes_) {
@@ -151,8 +158,7 @@ void FaceAuthenticator::reloadRuntimeSettings() {
     }
 }
 
-int64_t FaceAuthenticator::enrollPerson(const std::string& name,
-                                        const std::string& code,
+int64_t FaceAuthenticator::enrollPerson(const std::string& name, const std::string& code,
                                         const std::vector<float>& emb) {
     std::lock_guard<std::mutex> lock(mutex_);
     const auto personId = db_->addPerson(name, code, true);
@@ -161,11 +167,13 @@ int64_t FaceAuthenticator::enrollPerson(const std::string& name,
     return personId;
 }
 
-int64_t FaceAuthenticator::addPerson(const std::string& name, const std::string& code, const cv::Mat& image, std::vector<float>& emb) {
+int64_t FaceAuthenticator::addPerson(const std::string& name, const std::string& code,
+                                     const cv::Mat& image, std::vector<float>& emb) {
     auto& runtime = getOrCreateRuntime("manual_enrollment");
     cv::Mat frame = image.clone();
     auto result = runtime.pipeline->ProcessFrame(frame);
-    if (result.detections.empty() || !result.detections[0].face || !result.detections[0].mHasEmbedding) {
+    if (result.detections.empty() || !result.detections[0].face ||
+        !result.detections[0].mHasEmbedding) {
         return -1;
     }
 
@@ -202,10 +210,8 @@ int64_t FaceAuthenticator::identify(const std::vector<float>& emb, float& confid
     return personId;
 }
 
-void FaceAuthenticator::processDetection(face::SFace& face,
-                                         const std::string& trackId,
-                                         const std::string& cameraUid,
-                                         int64_t timestamp,
+void FaceAuthenticator::processDetection(face::SFace& face, const std::string& trackId,
+                                         const std::string& cameraUid, int64_t timestamp,
                                          const cv::Mat& originalFrame) {
     DEBUG_LOG_VAL("processDetection for trackId", trackId);
     if (trackId.empty() || originalFrame.empty()) {
@@ -224,7 +230,8 @@ void FaceAuthenticator::processDetection(face::SFace& face,
     bool recognitionRunning = isModuleRunning(runtime.registry, kModuleRecognition);
     DEBUG_LOG_VAL("Recognition module running:", recognitionRunning);
     if (!camera->streamEnabled || !camera->aiEnabled || !recognitionRunning) {
-        DEBUG_LOG("Camera stream/AI disabled or recognition module not running, skipping processing");
+        DEBUG_LOG(
+            "Camera stream/AI disabled or recognition module not running, skipping processing");
         return;
     }
 
@@ -235,7 +242,7 @@ void FaceAuthenticator::processDetection(face::SFace& face,
     float confidence = 0.0F;
     const int64_t personId = identify(embedding, confidence);
     DEBUG_LOG_VAL("Identified personId:", personId);
-    
+
     const std::string cropPath = buildCropPath(cropsDir, timestamp, personId, trackId);
     face.mPersonId = personId;
     face.mRecognitionConfidence = confidence;
@@ -309,8 +316,7 @@ void FaceAuthenticator::processDetection(face::SFace& face,
 
     auto currentLocation = locationTracker_->getLocation(personId);
     const bool locationChanged = !currentLocation.has_value() ||
-                                 currentLocation->zoneId != camera->zoneId ||
-                                 currentLocation->cameraId != camera->id;
+        currentLocation->zoneId != camera->zoneId || currentLocation->cameraId != camera->id;
     if (locationChanged) {
         locationTracker_->updateLocation(personId, camera->zoneId, camera->id, timestamp);
         DEBUG_LOG("Location updated for person");
@@ -414,15 +420,15 @@ std::vector<CameraConfig> FaceAuthenticator::getAllCameras() {
     return db_->getAllCameras();
 }
 
-std::optional<std::pair<bool, std::string>> FaceAuthenticator::getCameraModuleConfig(const std::string& cameraUid,
-                                                                                      const std::string& moduleName) {
+std::optional<std::pair<bool, std::string>>
+FaceAuthenticator::getCameraModuleConfig(const std::string& cameraUid,
+                                         const std::string& moduleName) {
     std::lock_guard<std::mutex> lock(mutex_);
     return db_->getCameraModuleConfig(cameraUid, moduleName);
 }
 
 void FaceAuthenticator::setCameraModuleConfig(const std::string& cameraUid,
-                                              const std::string& moduleName,
-                                              bool enabled,
+                                              const std::string& moduleName, bool enabled,
                                               const std::string& configJson) {
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -463,7 +469,8 @@ std::vector<TardinessRecord> FaceAuthenticator::getTardinessList(const std::stri
     return db_->getTardinessList(date);
 }
 
-FaceAuthenticator::CameraRuntime& FaceAuthenticator::getOrCreateRuntime(const std::string& cameraUid) {
+FaceAuthenticator::CameraRuntime&
+FaceAuthenticator::getOrCreateRuntime(const std::string& cameraUid) {
     std::lock_guard<std::mutex> lock(mutex_);
     auto it = runtimes_.find(cameraUid);
     if (it == runtimes_.end()) {
@@ -479,7 +486,8 @@ FaceAuthenticator::CameraRuntime& FaceAuthenticator::getOrCreateRuntime(const st
     return it->second;
 }
 
-std::optional<CameraConfig> FaceAuthenticator::getOrCreateDefaultCamera(const std::string& cameraUid) {
+std::optional<CameraConfig>
+FaceAuthenticator::getOrCreateDefaultCamera(const std::string& cameraUid) {
     {
         std::lock_guard<std::mutex> lock(mutex_);
         if (const auto existing = db_->getCameraConfig(cameraUid); existing.has_value()) {
@@ -498,7 +506,8 @@ std::optional<CameraConfig> FaceAuthenticator::getOrCreateDefaultCamera(const st
     return getCameraConfig(cameraUid);
 }
 
-void FaceAuthenticator::rebuildRuntimeModules(const std::string& cameraUid, CameraRuntime& runtime) {
+void FaceAuthenticator::rebuildRuntimeModules(const std::string& cameraUid,
+                                              CameraRuntime& runtime) {
     runtime.registry = backend::PluginRegistry{};
     registerBuiltInModules(runtime.registry);
 
@@ -516,7 +525,8 @@ void FaceAuthenticator::rebuildRuntimeModules(const std::string& cameraUid, Came
 
 void FaceAuthenticator::applyRuntimeModules(const std::string& cameraUid, CameraRuntime& runtime) {
     for (const auto& [name, baseConfig] : config_->Modules()) {
-        const auto merged = mergeModuleConfig(toBackendConfig(baseConfig), db_->getCameraModuleConfig(cameraUid, name));
+        const auto merged = mergeModuleConfig(toBackendConfig(baseConfig),
+                                              db_->getCameraModuleConfig(cameraUid, name));
         runtime.registry.updateModuleConfig(name, merged);
     }
 
@@ -530,39 +540,44 @@ void FaceAuthenticator::applyRuntimeModules(const std::string& cameraUid, Camera
         trackingConfig = mergeModuleConfig(toBackendConfig(config_->Modules().at(kModuleTracking)),
                                            db_->getCameraModuleConfig(cameraUid, kModuleTracking));
     }
-    runtime.pipeline->setMotionShortCircuitEnabled(boolValue(trackingConfig.parameters, "motion_short_circuit", false));
+    runtime.pipeline->setMotionShortCircuitEnabled(
+        boolValue(trackingConfig.parameters, "motion_short_circuit", false));
     runtime.pipeline->updateMotionParameters(
         intValue(trackingConfig.parameters, "motion_threshold", config_->MotionAreaThreshold()),
         intValue(trackingConfig.parameters, "motion_buffer", config_->MotionBufferFrames()),
-        intValue(trackingConfig.parameters, "motion_diff_threshold", config_->MotionDiffThreshold()),
+        intValue(trackingConfig.parameters, "motion_diff_threshold",
+                 config_->MotionDiffThreshold()),
         intValue(trackingConfig.parameters, "blur_kernel_size", config_->MotionBlurKernelSize()),
-        intValue(trackingConfig.parameters, "dilate_kernel_size", config_->MotionDilateKernelSize()));
+        intValue(trackingConfig.parameters, "dilate_kernel_size",
+                 config_->MotionDilateKernelSize()));
 
     backend::ModuleConfig recognitionModule{};
     if (config_->Modules().contains(kModuleRecognition)) {
-        recognitionModule = mergeModuleConfig(toBackendConfig(config_->Modules().at(kModuleRecognition)),
-                                              db_->getCameraModuleConfig(cameraUid, kModuleRecognition));
+        recognitionModule =
+            mergeModuleConfig(toBackendConfig(config_->Modules().at(kModuleRecognition)),
+                              db_->getCameraModuleConfig(cameraUid, kModuleRecognition));
     }
-    threshold_ = floatValue(recognitionModule.parameters, "faiss_threshold", recognitionConfig_.faissThreshold);
-    motionAnalyzer_->updateConfig(MotionConfig{
-        intValue(recognitionModule.parameters, "motion_window_size", recognitionConfig_.motionWindowSize),
-        floatValue(recognitionModule.parameters, "motion_threshold_px", recognitionConfig_.motionThresholdPx),
-        false});
+    threshold_ = floatValue(recognitionModule.parameters, "faiss_threshold",
+                            recognitionConfig_.faissThreshold);
+    motionAnalyzer_->updateConfig(
+        MotionConfig{intValue(recognitionModule.parameters, "motion_window_size",
+                              recognitionConfig_.motionWindowSize),
+                     floatValue(recognitionModule.parameters, "motion_threshold_px",
+                                recognitionConfig_.motionThresholdPx),
+                     false});
 }
 
 void FaceAuthenticator::registerBuiltInModules(backend::PluginRegistry& registry) {
     registry.registerFactory(kModuleDetection, []() {
         return std::make_shared<backend::StaticModule>(kModuleDetection);
     });
-    registry.registerFactory(kModuleTracking, []() {
-        return std::make_shared<backend::StaticModule>(kModuleTracking);
-    });
+    registry.registerFactory(
+        kModuleTracking, []() { return std::make_shared<backend::StaticModule>(kModuleTracking); });
     registry.registerFactory(kModuleRecognition, []() {
         return std::make_shared<backend::StaticModule>(kModuleRecognition);
     });
-    registry.registerFactory(kModuleLiveness, []() {
-        return std::make_shared<backend::StaticModule>(kModuleLiveness);
-    });
+    registry.registerFactory(
+        kModuleLiveness, []() { return std::make_shared<backend::StaticModule>(kModuleLiveness); });
     registry.registerFactory(kModuleAttendance, []() {
         return std::make_shared<backend::StaticModule>(kModuleAttendance);
     });
@@ -603,14 +618,14 @@ backend::ModuleConfig FaceAuthenticator::mergeModuleConfig(
     return merged;
 }
 
-bool FaceAuthenticator::isModuleRunning(const backend::PluginRegistry& registry, const std::string& moduleName) {
+bool FaceAuthenticator::isModuleRunning(const backend::PluginRegistry& registry,
+                                        const std::string& moduleName) {
     const auto module = registry.getModule(moduleName);
     return module && module->state() == backend::ModuleState::Running;
 }
 
 bool FaceAuthenticator::boolValue(const std::unordered_map<std::string, std::string>& params,
-                                  const std::string& key,
-                                  bool fallback) {
+                                  const std::string& key, bool fallback) {
     const auto it = params.find(key);
     if (it == params.end()) {
         return fallback;
@@ -619,8 +634,7 @@ bool FaceAuthenticator::boolValue(const std::unordered_map<std::string, std::str
 }
 
 int FaceAuthenticator::intValue(const std::unordered_map<std::string, std::string>& params,
-                                const std::string& key,
-                                int fallback) {
+                                const std::string& key, int fallback) {
     const auto it = params.find(key);
     if (it == params.end()) {
         return fallback;
@@ -633,8 +647,7 @@ int FaceAuthenticator::intValue(const std::unordered_map<std::string, std::strin
 }
 
 float FaceAuthenticator::floatValue(const std::unordered_map<std::string, std::string>& params,
-                                    const std::string& key,
-                                    float fallback) {
+                                    const std::string& key, float fallback) {
     const auto it = params.find(key);
     if (it == params.end()) {
         return fallback;
@@ -648,7 +661,8 @@ float FaceAuthenticator::floatValue(const std::unordered_map<std::string, std::s
 
 std::string FaceAuthenticator::lookupPersonName(FaceDatabase& db, int64_t personId) {
     DEBUG_LOG_VAL("lookupPersonName called with personId", personId);
-    if (personId < 0) return "Unknown";
+    if (personId < 0)
+        return "Unknown";
     Person person;
     if (!db.getPerson(personId, person)) {
         DEBUG_LOG("Person not found in DB");
@@ -656,8 +670,10 @@ std::string FaceAuthenticator::lookupPersonName(FaceDatabase& db, int64_t person
     }
     DEBUG_LOG_VAL("Person name:", person.name);
     DEBUG_LOG_VAL("Person code:", person.code);
-    if (!person.name.empty()) return person.name;
-    if (!person.code.empty()) return person.code;
+    if (!person.name.empty())
+        return person.name;
+    if (!person.code.empty())
+        return person.code;
     return "Person#" + std::to_string(personId);
 }
 
@@ -666,10 +682,12 @@ std::vector<float> FaceAuthenticator::toVector(const FeatureArray& embedding) {
 }
 
 int64_t FaceAuthenticator::currentUnixTimestamp() {
-    return static_cast<int64_t>(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
+    return static_cast<int64_t>(
+        std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
 }
 
-std::string FaceAuthenticator::buildScopedTrackId(const std::string& cameraUid, const std::string& trackId) {
+std::string FaceAuthenticator::buildScopedTrackId(const std::string& cameraUid,
+                                                  const std::string& trackId) {
     return cameraUid + "::" + trackId;
 }
 
@@ -681,4 +699,4 @@ std::string FaceAuthenticator::extractCameraUid(const std::string& scopedTrackId
     return scopedTrackId.substr(0, pos);
 }
 
-}  // namespace face
+} // namespace face

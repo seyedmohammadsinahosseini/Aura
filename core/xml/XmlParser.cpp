@@ -4,7 +4,8 @@ namespace xml {
 
 pugi::xml_document parse(const std::string& xml) {
     pugi::xml_document doc;
-    if (xml.empty()) return doc;
+    if (xml.empty())
+        return doc;
     doc.load_string(xml.c_str());
     return doc;
 }

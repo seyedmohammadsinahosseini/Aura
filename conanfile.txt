@@ -1,9 +1,9 @@
 [requires]
 opencv/4.12.0
 ffmpeg/4.4.6
-byte-track/1.0.0-2-71f99ef7
+byte-track/1.0.0
 nlohmann_json/3.11.3
-tensorrt-runtime/test-0.1
+tensorrt-runtime/1.0.0
 sqlite3/3.53.0
 faiss/1.12.0
 gstreamer/1.28.1

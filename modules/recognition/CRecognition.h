@@ -16,8 +16,8 @@ namespace rt = xbox::base_component::ai::runtime_handler;
 
 namespace face {
 class CRecognition {
- private:
-//        std::shared_ptr<IDeepLearning> mNet;
+private:
+    //        std::shared_ptr<IDeepLearning> mNet;
     std::unique_ptr<rt::tensorrt::TensorRTRuntime> mRuntime;
 
     cv::Size mModelShape = cv::Size(112, 112);
@@ -27,14 +27,14 @@ class CRecognition {
 
     static std::array<float, DIM> EmbedExtractor(cv::Mat embed);
 
- public:
-    explicit CRecognition(const std::shared_ptr<FaceConfig>& config,
-                          std::map<std::string, std::shared_ptr<rt::tensorrt::Engine>> &tensorrtEngines);
+public:
+    explicit CRecognition(
+        const std::shared_ptr<FaceConfig>& config,
+        std::map<std::string, std::shared_ptr<rt::tensorrt::Engine>>& tensorrtEngines);
 
-    FeatureArray ExtractEmbeddings(const SFace &face, cv::Mat &image);
+    FeatureArray ExtractEmbeddings(const SFace& face, cv::Mat& image);
 
     ~CRecognition();
-
 };
-}
+} // namespace face
 #endif //FACE_CPP_CRECOGNITION_H
