@@ -35,10 +35,15 @@ except ModuleNotFoundError as exc:  # pragma: no cover
     HAVE_PIL = False
     _MISSING = exc.name
 
-FONT_DIR = Path("/usr/share/fonts/truetype/dejavu")
-SANS = str(FONT_DIR / "DejaVuSans.ttf")
-SANS_B = str(FONT_DIR / "DejaVuSans-Bold.ttf")
-MONO = str(FONT_DIR / "DejaVuSansMono.ttf")
+def _ttf(name: str) -> str:
+    """Locate a DejaVu face without assuming one particular distro layout."""
+    for d in ("/usr/share/fonts/truetype/dejavu", "/usr/share/fonts/dejavu",
+              "/usr/share/fonts/TTF", "/Library/Fonts", str(Path.home() / ".fonts")):
+        cand = Path(d) / name
+        if cand.is_file():
+            return str(cand)
+    raise SystemExit(f"{name} not found: install the DejaVu fonts "
+                     f"(apt install fonts-dejavu-core) to re-render the diagrams")
 
 SCALE = 2  # render at 2x then downsample: crisp text at any zoom
 TITLE = 30
@@ -57,18 +62,25 @@ GREY = ("#f1f3f4", "#9aa4b2")
 WHITE = ("#ffffff", "#c3ccd8")
 
 
-def font(path: str, size: int) -> ImageFont.FreeTypeFont:
-    return ImageFont.truetype(path, size * SCALE)
+def font(pathname: str, size: int):
+    return ImageFont.truetype(_ttf(pathname), size * SCALE)
 
 
-FONTS = {
-    "title": font(SANS_B, TITLE),
-    "h2": font(SANS_B, H2),
-    "body": font(SANS, BODY),
-    "body_b": font(SANS_B, BODY),
-    "small": font(SANS, SMALL),
-    "mono": font(MONO, SMALL),
-}
+_FONTS: dict[str, object] = {}
+
+
+def FONTS() -> dict:
+    """Loaded on first use: `--check` must run on a runner with neither pillow nor fonts."""
+    if not _FONTS:
+        _FONTS.update({
+            "title": font("DejaVuSans-Bold.ttf", TITLE),
+            "h2": font("DejaVuSans-Bold.ttf", H2),
+            "body": font("DejaVuSans.ttf", BODY),
+            "body_b": font("DejaVuSans-Bold.ttf", BODY),
+            "small": font("DejaVuSans.ttf", SMALL),
+            "mono": font("DejaVuSansMono.ttf", SMALL),
+        })
+    return _FONTS
 
 
 class Canvas:
@@ -81,12 +93,12 @@ class Canvas:
 
     # --- primitives (all in logical pixels) --------------------------------
     def text_size(self, text: str, style: str) -> tuple[int, int]:
-        f = FONTS[style]
+        f = FONTS()[style]
         box = self.d.textbbox((0, 0), text, font=f)
         return (box[2] - box[0]) // SCALE, (box[3] - box[1]) // SCALE
 
     def text(self, x: int, y: int, text: str, style: str = "body", color=INK, anchor="la"):
-        self.d.text((x * SCALE, y * SCALE), text, font=FONTS[style], fill=color, anchor=anchor)
+        self.d.text((x * SCALE, y * SCALE), text, font=FONTS()[style], fill=color, anchor=anchor)
 
     def box(self, cx: int, cy: int, lines, fill, edge, *, style="body", pad=(16, 12),
              title_style=None, min_w=0, radius=10) -> tuple[int, int, int, int]:
@@ -113,7 +125,7 @@ class Canvas:
         y = y0 + pad[1]
         for idx, (line, st) in enumerate(rendered):
             self.d.text((cx * SCALE, (y + heights[idx] / 2) * SCALE),
-                        line, font=FONTS[st], fill=INK, anchor="mm")
+                        line, font=FONTS()[st], fill=INK, anchor="mm")
             y += heights[idx]
         return x0, y0, x1, y1
 
