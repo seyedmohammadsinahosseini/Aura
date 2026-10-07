@@ -1,0 +1,62 @@
+name: Feature request
+description: Propose something worth building here
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Scope check: this is a **LAN-only presence/attendance backend**. Features whose purpose is
+        surveillance of people who did not opt in (public-space tracking, emotion or attribute
+        inference, cross-site identity correlation) will be declined — see `docs/PRIVACY.md`.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: The use case, not the implementation.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed design
+      description: Which layer owns it (core / modules / services / ffi / http), and what the FFI or API surface looks like.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: layer
+    attributes:
+      label: Primary layer
+      options:
+        - core (config, registry, utilities)
+        - modules/camera
+        - modules/detection
+        - modules/tracking
+        - modules/recognition
+        - modules/attendance
+        - services (storage, streaming, inference)
+        - ffi (public C ABI)
+        - http (REST API)
+        - build / recipes / CI
+        - docs
+    validations:
+      required: true
+
+  - type: textarea
+    id: tests
+    attributes:
+      label: How would it be tested?
+      description: |
+        Can it run without a GPU? Then it belongs in `tests/` with a CTest entry. If it cannot, say
+        how you would validate it on hardware.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: willing
+    attributes:
+      label: Willing to help
+      options:
+        - label: I am willing to open a pull request for this

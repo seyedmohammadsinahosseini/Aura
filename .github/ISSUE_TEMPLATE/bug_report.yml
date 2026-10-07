@@ -1,0 +1,62 @@
+name: Bug report
+description: Something does not behave the way the docs say it should
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        If the issue involves authentication, data exposure or anything that could leak face data,
+        please use a **private** report instead (Security tab → "Report a vulnerability"), per
+        `SECURITY.md` in the repository root.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: Actual vs. expected, with the exact error text if there is one.
+      placeholder: |
+        Expected: POST /api/persons/{id}/face returns 201 and the person is recognised.
+        Actual: 400 with an empty body.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      value: |
+        1. `cmake --preset conan-release && cmake --build build`
+        2. `./build/faceauth core/config/config.json attendance.db`
+        3. `curl ...`
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      value: |
+        - OS / distribution:
+        - GPU + driver:
+        - CUDA / TensorRT versions:
+        - OpenCV / FAISS build (Conan revision if known):
+        - Compiler:
+        - Commit (`git rev-parse --short HEAD`):
+        - Cameras (model, connection type: V4L2 / RTSP / ONVIF):
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Startup banner, pipeline logs, `face_last_error()` text. Redact camera hosts and any names.
+      render: text
+
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy
+      options:
+        - label: I removed face images, databases and camera credentials from everything I attached
+          required: true

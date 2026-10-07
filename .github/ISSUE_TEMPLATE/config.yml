@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a vulnerability
+    url: https://github.com/seyedmohammadsinahosseini/cpp-face-auth-attendance/security/advisories/new
+    about: Private report — never open a public issue for data exposure or access-control problems.
+  - name: Questions and discussion
+    url: https://github.com/seyedmohammadsinahosseini/cpp-face-auth-attendance/discussions
+    about: Design questions, build problems, and "how would you extend this" conversations.

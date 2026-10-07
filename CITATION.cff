@@ -1,0 +1,33 @@
+cff-version: 1.2.0
+message: "If you use or discuss this project, cite it as a software repository."
+title: "FaceAuth Attendance: real-time multi-camera face authentication and attendance backend"
+type: software
+authors:
+  - given-names: Seyed Mohammad Sina
+    family-names: Hosseini
+repository-code: "https://github.com/seyedmohammadsinahosseini/cpp-face-auth-attendance"
+abstract: >-
+  A C++20 backend for face-based presence and attendance on a local network of IP
+  cameras. It discovers cameras (V4L2, ONVIF, RTSP), streams them through an
+  OpenCV/GStreamer pipeline, runs NVIDIA TensorRT face and head detection, tracks
+  identities with ByteTrack, recognises people with a FAISS IndexFlatIP over
+  512-dimensional face embeddings, and records arrivals, departures, work
+  sessions, tardiness and locations into SQLite, exposed through 56 REST
+  endpoints and a 71-function C FFI. Model weights and the proprietary logging
+  dependency are intentionally not distributed.
+keywords:
+  - face-recognition
+  - attendance-system
+  - tensorrt
+  - faiss
+  - bytetrack
+  - onvif
+  - rtsp
+  - gstreamer
+  - opencv
+  - cpp20
+  - computer-vision
+  - edge-ai
+license: MIT
+version: 1.0.0
+date-released: 2026-10-07

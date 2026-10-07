@@ -1,0 +1,16 @@
+version: 2
+
+# Only CI actions are automated here. The native dependencies in conanfile.txt are pinned on
+# purpose (OpenCV / CUDA / TensorRT / FAISS combinations are not freely interchangeable), so
+# Dependabot has no business opening PRs against them: bump them deliberately, with a build.
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    labels:
+      - ci
+    groups:
+      actions:
+        patterns:
+          - "*"
