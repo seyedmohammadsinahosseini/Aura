@@ -1,0 +1,20 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  errors:
+    # Unused imports/vars/elements are almost always real bugs — fail loudly.
+    unused_import: error
+    unused_local_variable: error
+    unused_element: error
+
+linter:
+  rules:
+    # Keep the console maintainable without being pedantic.
+    prefer_single_quotes: true
+    always_declare_return_types: true
+    unawaited_futures: true
+    avoid_print: true
+    require_trailing_commas: true
+    curly_braces_in_flow_control_structures: true
+    prefer_final_locals: true
+    prefer_final_in_for_each: true
