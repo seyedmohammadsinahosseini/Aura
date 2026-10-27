@@ -1,0 +1,91 @@
+# ==============================================================================
+# Docker Compose: FaceAuthentication (Backend + Frontend)
+# ==============================================================================
+# Usage:
+#   make up                           # Build Flutter web locally + docker compose up
+#   make build                        # Build Flutter web locally + docker compose build
+#   docker compose up --build          # Build & run (frontend must be built first)
+#   docker compose down                # Stop & remove
+#   docker compose down -v             # Stop, remove, and delete volumes
+#   docker compose logs -f backend     # Follow backend logs
+#   docker compose logs -f frontend    # Follow frontend logs
+#
+# Prerequisites:
+#   - Docker Engine installed
+#   - Flutter SDK installed (for frontend build)
+#   - nvidia-container-toolkit installed (for GPU passthrough)
+#   - Model files at ./backend/core/models/ (detection/recognition engines)
+# ==============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Backend: C++ REST API server (admin_server)
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: face-auth-backend
+    # ---------------------------------------------------------------------------
+    # IMPORTANT — camera discovery on the local network (ONVIF/RTSP):
+    # The backend MUST use the host network stack. Docker's default bridge
+    # network (a) does not forward multicast, so WS-Discovery probes never
+    # reach ONVIF cameras, and (b) hides the real LAN from the container,
+    # so the deep subnet scan only sees Docker's internal 172.x subnet.
+    # With `network_mode: host` the container behaves like a native app:
+    # multicast works, and the container sees the real LAN interfaces.
+    # ---------------------------------------------------------------------------
+    network_mode: host
+    # NOTE: `ports:` is not used with host networking — the server listens
+    # on 0.0.0.0:8080 directly on the host (same URL as before).
+    #
+    # If you CANNOT use host networking (e.g. rootless Docker), keep the
+    # default bridge and point the deep scan at your LAN explicitly.
+    # Multicast discovery is impossible on the bridge, but the TCP scan
+    # will still find cameras in the subnets you list, e.g.:
+    #   environment:
+    #     - CAMERA_SCAN_SUBNETS=192.168.1.0/24
+    devices:
+      # Host webcam(s) — allow V4L2 capture inside the container
+      - /dev/video0:/dev/video0
+      - /dev/video1:/dev/video1
+      - /dev/media0:/dev/media0
+    command: ["stdbuf", "-oL", "-eL", "admin_server"]
+    volumes:
+      # ONNX models and matching TensorRT engines from this machine
+      - ./backend/core/models:/app/core/models
+      # Use the existing project database instead of creating an empty in-container DB
+      - ./backend/attendance.db:/app/attendance.db
+      # Persist face crops and runtime data across restarts
+      - backend-data:/app/data
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Frontend: Flutter Web (Attendance Console, served by Nginx)
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend/flutter/attendance_console
+      dockerfile: Dockerfile
+    container_name: face-auth-frontend
+    ports:
+      - "3000:80"
+    # The backend runs on the host network (required for camera discovery),
+    # so it is no longer reachable by its Docker service name. Map
+    # `host.docker.internal` to the host IP so nginx can proxy /api/ to it.
+    # (`host-gateway` requires Docker Engine 20.10+)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  backend-data:

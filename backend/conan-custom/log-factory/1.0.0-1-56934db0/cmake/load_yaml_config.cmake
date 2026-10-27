@@ -1,0 +1,21 @@
+function(load_yaml_config yaml_file)
+    if(NOT EXISTS "${yaml_file}")
+        message(STATUS "build_config.yaml not found (CI build), using defaults")
+        return()
+    endif()
+    file(READ "${yaml_file}" yaml_content)
+
+    string(REGEX MATCH "build_example:[ \t]*(true|false|True|False)" _ ${yaml_content})
+    set(_raw_build_example "${CMAKE_MATCH_1}")
+    string(TOUPPER "${_raw_build_example}" _upper)
+    if(_upper STREQUAL "TRUE")
+        set(BUILD_EXAMPLE ON)
+    else()
+        set(BUILD_EXAMPLE OFF)
+    endif()
+    message(STATUS "✅ Loaded BUILD_EXAMPLE from YAML: ${BUILD_EXAMPLE}")
+
+    # Export as cache vars so they're globally visible
+    set(APP_VERSION "${APP_VERSION}" PARENT_SCOPE)
+    set(BUILD_EXAMPLE "${BUILD_EXAMPLE}" PARENT_SCOPE)
+endfunction()

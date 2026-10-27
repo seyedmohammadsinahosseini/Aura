@@ -1,0 +1,11 @@
+{
+  "modules": [
+    "detection",
+    "tracking",
+    "recognition",
+    "attendance"
+  ],
+  "max_cameras": 4,
+  "expires": "2027-01-01",
+  "signature": "development-placeholder"
+}

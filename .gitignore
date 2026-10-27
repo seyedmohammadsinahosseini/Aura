@@ -1,126 +1,124 @@
-# ---------------------------------------------------------------------------
-# Build artifacts
-# ---------------------------------------------------------------------------
-build/
-out/
-cmake-build-*/
-install/
-*.o
-*.obj
-*.a
-*.so
-*.so.*
-*.dylib
-*.dll
-*.lib
-*.exe
-CMakeCache.txt
-CMakeFiles/
-cmake_install.cmake
-CTestTestfile.cmake
-Testing/
+# ============================
+# Dart / Flutter
+# ============================
+frontend/flutter/attendance_app/.dart_tool/
+frontend/flutter/attendance_app/.packages
+frontend/flutter/attendance_app/.pub/
+frontend/flutter/attendance_app/build/
+frontend/flutter/attendance_app/**/*.iml
+frontend/flutter/attendance_app/**/ios/.symlinks/
+frontend/flutter/attendance_app/**/ios/Pods/
+frontend/flutter/attendance_app/**/ios/Runner.xcodeproj/project.xcworkspace/
+frontend/flutter/attendance_app/**/ios/Runner.xcodeproj/xcuserdata/
+frontend/flutter/attendance_app/**/macos/Pods/
+frontend/flutter/attendance_app/**/android/.gradle/
+frontend/flutter/attendance_app/**/android/local.properties
+frontend/flutter/attendance_app/**/android/key.properties
+frontend/flutter/attendance_app/**/android/key.jks
+frontend/flutter/attendance_app/pubspec.lock
+frontend/flutter/attendance_app/.flutter-plugins
+frontend/flutter/attendance_app/.flutter-plugins-dependencies
+frontend/flutter/attendance_app/.vscode/
 
-# ---------------------------------------------------------------------------
-# IDEs and editors
-# ---------------------------------------------------------------------------
-.idea/
+# ============================
+# C++ / CMake / backend build
+# ============================
+backend/build/
+backend/.cmake/
+backend/CMakeFiles/
+backend/CMakePresets.json
+backend/CMakeUserPresets.json
+backend/conaninfo.txt
+backend/conanbuild.*
+backend/conanrun*
+backend/conanbuildenv*
+backend/conanrunenv*
+backend/deactivate_conan*
+backend/conan_toolchain.cmake
+backend/conandeps_legacy.cmake
+backend/cmakedeps_macros.cmake
+backend/*Config.cmake
+backend/*ConfigVersion.cmake
+backend/*Targets.cmake
+backend/*release-x86_64*.cmake
+backend/*Data.cmake
+backend/Find*.cmake
+backend/conanenv*
+backend/*.bak
+backend/my_libraries.tgz
+backend/full_dump.sql
+backend/untitled.sql
+backend/attendance.db*
+
+# ============================
+# React frontend (exclude entirely)
+# ============================
+frontend/react/
+frontend/react/node_modules/
+frontend/react/dist/
+frontend/react/src-tauri/target/
+frontend/react/src-tauri/bin/
+
+# ============================
+# Python
+# ============================
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# ============================
+# IDE / Editor
+# ============================
 .vscode/
-*.user
-*.suo
-*.ncb
-*.sln
-*.vcxproj
-*.vcxproj.filters
-
-# ---------------------------------------------------------------------------
-# OS metadata
-# ---------------------------------------------------------------------------
-desktop.ini
-Thumbs.db
-.DS_Store
+.idea/
 *.swp
 *.swo
 *~
+.DS_Store
+Thumbs.db
 
-# ---------------------------------------------------------------------------
-# Caches and tooling
-# ---------------------------------------------------------------------------
-.cache/
-.ccls-cache/
-compile_commands.json
-*.gcda
-*.gcno
-*.gcov
+# ============================
+# OS
+# ============================
+.DS_Store
+Thumbs.db
+*.log
+.env
 
-# ---------------------------------------------------------------------------
-# Runtime state: databases, generated files and private configuration.
-# Only the `*.example.json` templates are tracked; the real files hold
-# deployment-specific values (and on some installs, camera credentials).
-# ---------------------------------------------------------------------------
+# ============================
+# Docker
+# ============================
+backend/data/
+
+# ============================
+# Corrupted binary files
+# ============================
+frontend/flutter/attendance_app/x*
+frontend/flutter/attendance_app/[^a-zA-Z0-9_]*
+
+# ============================
+# Local build artifacts
+# ============================
+build-linux/
+backend/.cache/
+backend/CMakeCache.txt
+frontend/flutter/attendance_app/attendance.db
 *.db
-*.db-journal
-*.sqlite
-*.sqlite3
-*.sqlite3-journal
-*.bak
-core/config/config.json
-core/config/license.json
 
-# Never commit biometric data or captures.
-crops/*
-!crops/.gitkeep
-*.jpg
-*.jpeg
-*.png
-!docs/images/*.png
-!docs/images/*.jpg
+# ============================
+# Admin panel (JS / Tauri)
+# ============================
+frontend/admin-panel/node_modules/
+frontend/admin-panel/dist/
+frontend/admin-panel/.next/
+frontend/admin-panel/dev.log
+frontend/admin-panel/tsconfig.tsbuildinfo
+frontend/admin-panel/src-tauri/target/
 
-# ---------------------------------------------------------------------------
-# Model weights — obtained and converted separately, see docs/MODELS.md
-# ---------------------------------------------------------------------------
-*.engine
-*.onnx
-*.etlt
-*.pt
-*.pth
-*.trt
-core/models/openvino/*.xml.hash
-core/models/facedetect/tao-converter
+# ============================
+# Exported models / datasets (too large for git)
+# ============================
+e/
 
-# ---------------------------------------------------------------------------
-# Media (test clips must not end up in git history)
-# ---------------------------------------------------------------------------
-*.avi
-*.mp4
-*.mpeg
-*.mkv
-*.mov
-*.ts
-
-# ---------------------------------------------------------------------------
-# Conan generated files
-# ---------------------------------------------------------------------------
-conan_toolchain.cmake
-conanbuild.*
-conanrun.*
-deactivate_conanbuild.*
-deactivate_conanrun.*
-conandeps_legacy.cmake
-cmakedeps_macros.cmake
-CMakePresets.json
-CMakeUserPresets.json
-*-Target-release.cmake
-*-release-*-data.cmake
-*-config-version.cmake
-*-config.cmake
-*Targets.cmake
-
-# ---------------------------------------------------------------------------
-# Non-redistributable internal packages (see conan/README.md)
-# ---------------------------------------------------------------------------
-conan/recipes/log-entry/
-conan.tar.xz
-
-# Python
-__pycache__/
-*.pyc

@@ -1,0 +1,17 @@
+{
+  "name": "FaceAuthentication Console",
+  "short_name": "FaceAuth",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#09090B",
+  "theme_color": "#4F46E5",
+  "description": "Real-time face recognition attendance console",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

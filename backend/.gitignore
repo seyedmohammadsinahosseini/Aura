@@ -1,0 +1,37 @@
+.idea
+
+build*
+*.avi
+*.mp4
+*.mpeg
+*.jpg
+*.jpeg
+*.engine
+*.pt
+*.pth
+*.sqlite
+*.xml.hash
+*.db
+
+# models: ONNX weights ship via Git LFS (.gitattributes); generated
+# TensorRT engines and legacy dirs stay out of the repository
+core/models/*
+!core/models/*.onnx
+!core/models/reorder.py
+data/
+
+CMakeUserPresets.json
+conan_toolchain.cmake
+conanbuild.*
+conanrun.*
+deactivate_conanbuild.*
+deactivate_conanrun.*
+conandeps_legacy.cmake
+cmakedeps_macros.cmake
+CMakePresets.json
+*-Target-release.cmake
+*-release-*-data.cmake
+*-config-version.cmake
+*-config.cmake
+*Targets.cmake
+
